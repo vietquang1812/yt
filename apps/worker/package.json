@@ -1,0 +1,19 @@
+{
+  "name": "worker",
+  "private": true,
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/main.js",
+    "start:dev": "ts-node --transpile-only src/main.ts"
+  },
+  "dependencies": {
+    "@yt-ai/common": "workspace:*",
+    "bullmq": "^5.15.0",
+    "dotenv": "^16.4.5",
+    "@yt-ai/db": "workspace:*"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.4"
+  }
+}

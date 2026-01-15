@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ProjectStatus {
+  IDEA_SELECTED
+  SCRIPT_DRAFTED
+  SCRIPT_QA_PASSED
+  VOICE_RENDERED
+  SCENES_PLANNED
+  ASSETS_FETCHED
+  VIDEO_RENDERED
+  SHORTS_RENDERED
+  THUMBNAIL_READY
+  METADATA_READY
+  SCHEDULED
+  PUBLISHED
+  ANALYTICS_INGESTED
+  FAILED
+}
+
+enum ArtifactType { 
+  IDEA_JSON 
+  SCRIPT_DRAFT 
+  SCRIPT_FINAL 
+  QA_REPORT 
+  VOICE_WAV 
+  TIMESTAMPS_JSON 
+  SCENE_PLAN_JSON 
+  VIDEO_FINAL_MP4 
+  SHORT_MP4 
+  THUMB_PNG 
+  METADATA_JSON 
+}
+enum JobStatus { 
+  QUEUED 
+  RUNNING 
+  SUCCEEDED 
+  FAILED 
+}
+
+  model Project {
+  id              String   @id @default(uuid())
+  topic           String
+  language        String   @default("en")
+  durationMinutes Int      @default(6)
+  format          String   @default("youtube_long") // hoặc enum nếu muốn
+  tone            String?  // optional
+  pillar          String?  // optional
+
+  status          ProjectStatus @default(IDEA_SELECTED)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  artifacts       Artifact[]
+  jobs            Job[]
+  analytics       Analytics[]
+}
+
+model Artifact {
+  id        String       @id @default(uuid())
+  projectId String
+  project   Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  type      ArtifactType
+  uri       String
+  meta      Json?
+  createdAt DateTime     @default(now())
+
+  @@index([projectId, type])
+}
+
+model Job {
+  id         String    @id @default(uuid())
+  projectId  String
+  project    Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name       String
+  status     JobStatus @default(QUEUED)
+  attempt    Int       @default(0)
+  error      String?
+  startedAt  DateTime?
+  finishedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([projectId, name])
+}
+
+model Analytics {
+  id              String   @id @default(uuid())
+  projectId       String
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  youtubeVideoId  String?
+  ctr             Float?
+  avgViewDuration Float?
+  retention30s    Float?
+  views7d         Int?
+  subsGained7d    Int?
+  capturedAt      DateTime @default(now())
+
+  @@index([projectId, capturedAt])
+}

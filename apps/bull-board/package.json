@@ -1,0 +1,15 @@
+{
+  "name": "bull-board",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "@bull-board/api": "^6.7.9",
+    "@bull-board/express": "^6.7.9",
+    "bullmq": "^5.15.0",
+    "express": "^4.19.2",
+    "ioredis": "^5.4.1"
+  }
+}

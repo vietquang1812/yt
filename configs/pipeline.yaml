@@ -1,0 +1,6 @@
+pipeline:
+  - name: script_generate
+  - name: script_refine
+    depends_on: ["script_generate"]
+  - name: script_finalize
+    depends_on: ["script_refine"]
