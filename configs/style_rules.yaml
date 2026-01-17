@@ -1,2 +1,92 @@
-script:
+language: en
+
+format:
+  primary: youtube_long
+  supported:
+    - youtube_long
+    - shorts
+    - podcast_clip
+
+timing:
   hook_seconds_max: 10
+  section_length_seconds:
+    min: 20
+    max: 90
+  total_duration_minutes:
+    min: 5
+    max: 8
+
+structure:
+  required_sections:
+    - hook
+    - problem
+    - reframe
+    - steps
+    - closing
+  optional_sections:
+    - short_story
+    - example
+
+hook_rules:
+  must:
+    - challenge a common belief
+    - create mild tension
+  must_not:
+    - clickbait
+    - shouting
+    - exaggeration
+
+language_rules:
+  sentence:
+    max_words: 18
+    preferred_length: 8-14
+  vocabulary:
+    style: simple
+    avoid:
+      - "unlock your potential"
+      - "change your life"
+      - "next level"
+      - "crush your goals"
+      - "believe in yourself"
+      - "manifest"
+  tone:
+    avoid:
+      - preachy
+      - overly emotional
+      - academic
+
+content_rules:
+  insights:
+    min: 1
+    unexpected: true
+  action_steps:
+    min: 3
+    max: 5
+    requirements:
+      - concrete
+      - immediately applicable
+      - low friction
+
+closing_rules:
+  must:
+    - calm
+    - reflective
+  must_not:
+    - hard sell
+    - aggressive subscribe push
+
+cta_rules:
+  frequency: 1
+  placement: end
+  style: soft
+  examples:
+    - "If this made sense, the next video might too."
+    - "You can subscribe if you want more like this."
+
+shorts_adaptation:
+  enabled: true
+  rules:
+    - single core idea
+    - one strong line in first 2 seconds
+    - no intro
+    - no outro

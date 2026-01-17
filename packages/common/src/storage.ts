@@ -1,24 +1,26 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import crypto from "node:crypto";
 
-export type StorageDriver = "local" | "s3";
-export type PutResult = { uri: string; meta: Record<string, any> };
+export type PutResult = {
+  uri: string;
+  meta: { bytes: number; filename: string };
+};
 
 export class ArtifactStorage {
-  constructor(private readonly driver: StorageDriver, private readonly baseDir: string) {}
+  constructor(private driver: "local", private baseDir: string) {}
 
   async put(projectId: string, filename: string, data: Buffer): Promise<PutResult> {
-    if (this.driver !== "local") throw new Error("S3 driver not implemented in MVP");
+    if (this.driver !== "local") throw new Error("Only local storage is implemented");
+
     const dir = path.join(this.baseDir, projectId);
     await fs.mkdir(dir, { recursive: true });
-    const filePath = path.join(dir, filename);
-    await fs.writeFile(filePath, data);
-    const sha256 = crypto.createHash("sha256").update(data).digest("hex");
-    return { uri: filePath, meta: { sha256, bytes: data.length } };
-  }
 
-  async read(uri: string): Promise<Buffer> {
-    return fs.readFile(uri);
+    const filepath = path.join(dir, filename);
+    await fs.writeFile(filepath, data);
+
+    return {
+      uri: filepath, // lưu absolute/relative tùy bạn; hiện đang lưu path trong container
+      meta: { bytes: data.length, filename },
+    };
   }
 }

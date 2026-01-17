@@ -8,7 +8,6 @@
     "dev:api": "pnpm --filter orchestrator-api start:dev",
     "dev:worker": "pnpm --filter worker start:dev",
     "dev:bull": "pnpm --filter bull-board start",
-    "prisma:generate": "pnpm --filter orchestrator-api prisma:generate",
     "db:generate": "pnpm --filter @yt-ai/db prisma:generate",
     "db:migrate:dev": "pnpm --filter @yt-ai/db prisma:migrate:dev",
     "db:migrate:deploy": "pnpm --filter @yt-ai/db prisma:migrate:deploy",

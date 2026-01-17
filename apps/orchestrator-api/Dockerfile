@@ -18,6 +18,7 @@ COPY configs ./configs
 ENV NODE_ENV=development
 RUN pnpm install --prod=false
 RUN pnpm --filter @yt-ai/db prisma:generate
+RUN pnpm --filter @yt-ai/db build
 # Prisma generate + build
 # RUN pnpm --filter orchestrator-api prisma:generate
 RUN pnpm --filter orchestrator-api build

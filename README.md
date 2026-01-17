@@ -18,7 +18,7 @@ Prereqs: Node 20+, pnpm, Postgres, Redis, ffmpeg
 ```bash
 pnpm install
 cp .env.example .env
-pnpm prisma:generate
+pnpm db:generate
 pnpm db:migrate:dev
 
 pnpm dev:api

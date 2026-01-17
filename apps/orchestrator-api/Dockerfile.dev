@@ -1,0 +1,39 @@
+FROM node:20-slim
+
+WORKDIR /app
+
+# System deps (dev)
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl ca-certificates wget \
+  && rm -rf /var/lib/apt/lists/*
+
+# pnpm via corepack
+RUN corepack enable && corepack prepare pnpm@9.12.0 --activate
+
+ENV NODE_ENV=development
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME:$PATH
+
+# Configure pnpm store location (mapped as volume in compose)
+RUN pnpm config set store-dir /pnpm/store
+
+# Copy only workspace manifests first for better caching
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+
+# Optional: prefetch deps to warm pnpm store cache (fast on rebuild)
+# (install thật sẽ chạy lúc container start khi volumes đã mount)
+
+COPY apps ./apps
+COPY packages ./packages
+COPY configs ./configs
+
+
+RUN pnpm install --prod=false
+
+# Copy minimal sources so the image can still run without bind-mount (optional)
+# In compose dev, source sẽ bị mount đè nên không sao
+
+EXPOSE 3000
+
+# Default command (compose sẽ override command này)
+CMD ["pnpm", "--filter", "orchestrator-api", "start:dev"]

@@ -10,7 +10,6 @@ datasource db {
 
 enum ProjectStatus {
   IDEA_SELECTED
-  SCRIPT_DRAFTED
   SCRIPT_QA_PASSED
   VOICE_RENDERED
   SCENES_PLANNED
@@ -22,14 +21,17 @@ enum ProjectStatus {
   SCHEDULED
   PUBLISHED
   ANALYTICS_INGESTED
+  SCRIPT_REFINED
+  SCRIPT_FINALIZED
   FAILED
 }
 
-enum ArtifactType { 
+enum ArtifactType {
+  SCRIPT_DRAFT_JSON
+  SCRIPT_REFINED_JSON
+  SCRIPT_FINAL_MD
+  QA_REPORT_JSON 
   IDEA_JSON 
-  SCRIPT_DRAFT 
-  SCRIPT_FINAL 
-  QA_REPORT 
   VOICE_WAV 
   TIMESTAMPS_JSON 
   SCENE_PLAN_JSON 
@@ -67,7 +69,9 @@ model Artifact {
   id        String       @id @default(uuid())
   projectId String
   project   Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
   type      ArtifactType
+  filename  String
   uri       String
   meta      Json?
   createdAt DateTime     @default(now())
