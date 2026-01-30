@@ -38,8 +38,9 @@ hook_rules:
 
 language_rules:
   sentence:
-    max_words: 18
-    preferred_length: 8-14
+    max_words: 22
+    preferred_length:
+      12-18
   vocabulary:
     style: simple
     avoid:
@@ -90,3 +91,11 @@ shorts_adaptation:
     - one strong line in first 2 seconds
     - no intro
     - no outro
+    
+formatting_rules:
+  minimal_line_breaks: true
+  avoid_single_line_paragraphs: true
+
+tempo_rules:
+  target_voice_speed: "1.05x"
+  avoid_long_pauses: true

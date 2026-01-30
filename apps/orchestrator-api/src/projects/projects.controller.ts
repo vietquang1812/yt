@@ -17,6 +17,11 @@ export class ProjectsController {
     private readonly projects: ProjectsService,
     private readonly pipeline: PipelineService
   ) {}
+  
+  @Get()
+  list() {
+    return this.projects.list();
+  }
 
   @Post()
   create(@Body() dto: CreateProjectDto) {
@@ -36,5 +41,10 @@ export class ProjectsController {
   @Get(":id/artifacts")
   artifacts(@Param("id") id: string) {
     return this.projects.listArtifacts(id);
+  }
+
+  @Get(":id/artifacts/:artifactId/content")
+  artifactContent(@Param("artifactId") artifactId: string) {
+    return this.projects.getArtifactContent(artifactId);
   }
 }

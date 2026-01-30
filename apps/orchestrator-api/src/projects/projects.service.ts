@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { prisma, ProjectStatus } from "@yt-ai/db";
+import * as fs from "node:fs/promises";
 
 type CreateProjectDto = {
   topic: string;
@@ -12,6 +13,14 @@ type CreateProjectDto = {
 
 @Injectable()
 export class ProjectsService {
+  async list() {
+    return prisma.project.findMany({
+      orderBy: { createdAt: "desc" },
+      select: { id: true, topic: true, status: true, createdAt: true }
+    });
+  }
+
+
   async create(dto: CreateProjectDto) {
     if (!dto.topic || !dto.topic.trim()) {
       throw new BadRequestException("topic is required");
@@ -44,5 +53,19 @@ export class ProjectsService {
       where: { projectId },
       orderBy: { createdAt: "asc" },
     });
+  }
+
+  async getArtifactContent(artifactId: string) {
+    const artifact = await prisma.artifact.findUnique({ where: { id: artifactId } });
+    if (!artifact) throw new NotFoundException("Artifact not found");
+
+    const buf = await fs.readFile(artifact.uri);
+
+    const textTypes = new Set(["SCRIPT_FINAL_MD", "SCENE_PLAN_JSON", "METADATA_JSON"]);
+    if (textTypes.has(artifact.type)) {
+      return { id: artifact.id, type: artifact.type, content: buf.toString("utf8") };
+    }
+
+    return { id: artifact.id, type: artifact.type, base64: buf.toString("base64") };
   }
 }

@@ -10,14 +10,12 @@ identity:
       They consume self-improvement content but are tired of hype and clichés.
 
 voice:
-  tone:
-    - calm
-    - honest
-    - grounded
-    - slightly humorous
   pacing:
-    sentence_length: short
-    pause_frequency: medium
+    sentence_length: moderate
+    pause_frequency: low
+  delivery:
+    line_breaks: minimal
+    tempo: "1.05x"
   emotion:
     intensity: low
     control: high

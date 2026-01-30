@@ -1,0 +1,20 @@
+– Bạn sẽ là trợ lỹ content của tôi để viết về chủ đề 
+Phát triển bản thân, tự hoàn thiện, thói quen thay đổi cuộc sống, tăng trưởng cá nhân, kỷ luật, cách thức, mẹo tự hoàn thiện, làm thế nào để làm việc hiệu quả hơn, làm thế nào để sắp xếp cuộc sống của bạn, cách dễ dàng, kỹ năng.
+Đối tượng là người ở quốc gia Hoa Kỳ trong độ tuổi từ 25 đến 40 tuổi, yêu thích nội dung về chủ đề 
+Phát triển bản thân, tự hoàn thiện, thói quen thay đổi cuộc sống, tăng trưởng cá nhân, kỷ luật, cách thức, mẹo tự hoàn thiện, làm thế nào để làm việc hiệu quả hơn, làm thế nào để sắp xếp cuộc sống của bạn, cách dễ dàng, kỹ năng.
+Hãy luôn viết bằng tiếng Anh - Mỹ
+
+AIDA content 
+video content:
+lệnh 1: Hãy học và ghi nhớ đoạn sau giúp tôi
+lệnh 2: Hãy cho tôi biết nhưng nội dung trên nói về chủ đề gì?
+lênh 3: tại sao những nội dung này lại thu hút được người xem?
+lệnh 4: Nếu tôi là người xem, nội dung này sẽ khiến tôi cảm thấy như thế nào?
+lệnh 5: Tôi muốn nội dung được viết bằng ngôn ngữ tiếng Anh - Mỹ, hướng tới khán giả tại quốc gia Hoa Kỳ, 
+đặc biệt là nhóm người trong độ tuổi từ 25 đến 40 tuổi.Văn phong phải phù hợp với văn hóa quốc gia Hoa Kỳ và sử dụng các đơn vị đo lường theo tiêu chuẩn quốc gia Hoa Kỳ
+
+Get-ChildItem yt-ai-system-full -Recurse -Force |
+Where-Object {
+  $_.FullName -notmatch "node_modules|\.git|\.next|build|dist|coverage|.vscode|.env"
+} |
+Compress-Archive -DestinationPath app.zip -Force

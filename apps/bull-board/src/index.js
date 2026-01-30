@@ -1,23 +1,80 @@
 import express from "express";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { createBullBoard } from "@bull-board/api";
 import { ExpressAdapter } from "@bull-board/express";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { Queue } from "bullmq";
 import IORedis from "ioredis";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const PORT = Number(process.env.PORT || 4000);
 const REDIS_HOST = process.env.REDIS_HOST || "localhost";
 const REDIS_PORT = Number(process.env.REDIS_PORT || 6379);
 
-const connection = new IORedis({ host: REDIS_HOST, port: REDIS_PORT, maxRetriesPerRequest: null });
-const names = ["pipeline","llm","assets","media"];
-const queues = names.map((n)=> new Queue(n, { connection }));
+// Orchestrator API base (docker dùng http://orchestrator-api:3000)
+const ORCH_API = process.env.ORCH_API || "http://localhost:3000";
 
+const connection = new IORedis({
+  host: REDIS_HOST,
+  port: REDIS_PORT,
+  maxRetriesPerRequest: null
+});
+
+const names = ["pipeline", "llm", "assets", "media"];
+const queues = names.map((n) => new Queue(n, { connection }));
+
+// Bull board mounts at /queues
 const serverAdapter = new ExpressAdapter();
-serverAdapter.setBasePath("/");
-createBullBoard({ queues: queues.map((q)=> new BullMQAdapter(q)), serverAdapter });
+serverAdapter.setBasePath("/queues");
+createBullBoard({
+  queues: queues.map((q) => new BullMQAdapter(q)),
+  serverAdapter
+});
 
 const app = express();
-app.use("/", serverAdapter.getRouter());
-app.get("/health", (_,res)=>res.json({ok:true}));
-app.listen(PORT, ()=>console.log(`Bull Board http://localhost:${PORT}`));
+app.use(express.json());
+
+// --------------------
+// Admin static pages
+// --------------------
+app.use("/admin", express.static(path.join(__dirname, "../public/admin")));
+
+// --------------------
+// Admin API proxy -> orchestrator-api
+// --------------------
+async function proxy(req, res, targetPath, options = {}) {
+  const url = `${ORCH_API}${targetPath}`;
+  const r = await fetch(url, {
+    method: options.method || "GET",
+    headers: { "content-type": "application/json" },
+    body: options.body ? JSON.stringify(options.body) : undefined
+  });
+  const text = await r.text();
+  res.status(r.status).send(text);
+}
+
+app.get("/admin/api/projects", (req, res) => proxy(req, res, `/projects`));
+app.get("/admin/api/projects/:id", (req, res) => proxy(req, res, `/projects/${req.params.id}`));
+app.get("/admin/api/projects/:id/artifacts", (req, res) =>
+  proxy(req, res, `/projects/${req.params.id}/artifacts`)
+);
+app.get("/admin/api/projects/:id/artifacts/:artifactId/content", (req, res) =>
+  proxy(req, res, `/projects/${req.params.id}/artifacts/${req.params.artifactId}/content`)
+);
+app.post("/admin/api/projects/:id/run", (req, res) =>
+  proxy(req, res, `/projects/${req.params.id}/run`, { method: "POST" })
+);
+
+// --------------------
+// Bull board UI
+// --------------------
+app.use("/queues", serverAdapter.getRouter());
+
+app.get("/", (_req, res) => res.redirect("/admin/projects.html"));
+app.get("/health", (_req, res) => res.json({ ok: true }));
+
+app.listen(PORT, () => console.log(`Admin http://localhost:${PORT}/admin/projects.html | Queues http://localhost:${PORT}/queues`));

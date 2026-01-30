@@ -1,0 +1,170 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Project</title>
+  <style>
+    body{font-family:system-ui,Arial;margin:24px;max-width:1100px}
+    a{color:#0b62d6;text-decoration:none}
+    .btn{border:1px solid #ddd;padding:6px 10px;border-radius:8px;background:#fff;cursor:pointer}
+    .tabs{display:flex;gap:8px;margin:14px 0}
+    .tab{border:1px solid #ddd;padding:6px 10px;border-radius:8px;background:#fff;cursor:pointer}
+    .active{background:#f3f3f3}
+    pre{white-space:pre-wrap;line-height:1.5;border:1px solid #eee;padding:12px;border-radius:10px}
+    .card{border:1px solid #eee;padding:12px;border-radius:10px;margin:10px 0}
+    .muted{opacity:.75}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  </style>
+</head>
+<body>
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+    <div>
+      <a href="/admin/projects.html">← Back</a>
+      <h1 id="topic" style="margin:8px 0 4px 0"></h1>
+      <div class="muted" id="status"></div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <a class="btn" href="/queues">Queues</a>
+      <button class="btn" id="run">Run pipeline</button>
+      <button class="btn" id="reload">Reload</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="script">Script</button>
+    <button class="tab" data-tab="scenes">Scenes</button>
+    <button class="tab" data-tab="seo">SEO + Thumbnail</button>
+  </div>
+
+  <div id="view-script">
+    <pre id="script">Loading…</pre>
+  </div>
+
+  <div id="view-scenes" style="display:none">
+    <div id="scenes">Loading…</div>
+  </div>
+
+  <div id="view-seo" style="display:none">
+    <div class="grid">
+      <div class="card">
+        <div><b>Title variants</b></div>
+        <div id="titles" class="muted"></div>
+      </div>
+      <div class="card">
+        <div><b>Thumbnail</b></div>
+        <div class="muted" id="thumbText"></div>
+        <div class="muted" id="thumbPrompt" style="margin-top:8px"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div><b>SEO description</b></div>
+      <div id="desc" class="muted" style="white-space:pre-wrap;margin-top:6px"></div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div><b>Keywords</b></div>
+        <div id="keywords" class="muted"></div>
+      </div>
+      <div class="card">
+        <div><b>Hashtags</b></div>
+        <div id="hashtags" class="muted"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const id = new URLSearchParams(location.search).get('id');
+
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(t => t.onclick = () => {
+      tabs.forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      const key = t.dataset.tab;
+      document.getElementById('view-script').style.display = key === 'script' ? '' : 'none';
+      document.getElementById('view-scenes').style.display = key === 'scenes' ? '' : 'none';
+      document.getElementById('view-seo').style.display = key === 'seo' ? '' : 'none';
+    });
+
+    function latest(arts, type) {
+      return arts.filter(a => a.type === type)
+        .sort((a,b)=> new Date(b.createdAt) - new Date(a.createdAt))[0];
+    }
+
+    async function load() {
+      const proj = await fetch(`/admin/api/projects/${id}`).then(r=>r.json());
+      document.getElementById('topic').textContent = proj.topic || id;
+      document.getElementById('status').textContent = `Status: ${proj.status || ''}`;
+
+      const arts = await fetch(`/admin/api/projects/${id}/artifacts`).then(r=>r.json());
+      const scriptArt = latest(arts, "SCRIPT_FINAL_MD");
+      const scenesArt = latest(arts, "SCENE_PLAN_JSON");
+      const metaArt = latest(arts, "METADATA_JSON");
+
+      // Script
+      if (scriptArt) {
+        const r = await fetch(`/admin/api/projects/${id}/artifacts/${scriptArt.id}/content`).then(r=>r.json());
+        document.getElementById('script').textContent = r.content || '';
+      } else {
+        document.getElementById('script').textContent = "No script yet.";
+      }
+
+      // Scenes
+      if (scenesArt) {
+        const r = await fetch(`/admin/api/projects/${id}/artifacts/${scenesArt.id}/content`).then(r=>r.json());
+        const scenes = JSON.parse(r.content || "[]");
+        document.getElementById('scenes').innerHTML = scenes.map(s => `
+          <div class="card">
+            <div><b>#${s.id}</b> <span class="muted">${escapeHtml(s.timestamp_range || '')}</span></div>
+            <div style="margin-top:8px"><b>Narration:</b> <span class="muted">${escapeHtml(s.narration || '')}</span></div>
+            <div style="margin-top:6px"><b>Visual prompt:</b> <span class="muted">${escapeHtml(s.visual_prompt || '')}</span></div>
+            <div style="margin-top:6px"><b>On-screen text:</b> <span class="muted">${escapeHtml(s.on_screen_text || '')}</span></div>
+            ${Array.isArray(s.broll_keywords) && s.broll_keywords.length
+              ? `<div style="margin-top:6px" class="muted"><b>B-roll:</b> ${s.broll_keywords.map(escapeHtml).join(", ")}</div>`
+              : ""}
+          </div>
+        `).join('');
+      } else {
+        document.getElementById('scenes').textContent = "No scenes yet.";
+      }
+
+      // SEO + Thumbnail
+      if (metaArt) {
+        const r = await fetch(`/admin/api/projects/${id}/artifacts/${metaArt.id}/content`).then(r=>r.json());
+        const meta = JSON.parse(r.content || "{}");
+
+        document.getElementById('titles').textContent = (meta.title_variants || []).join(" | ");
+        document.getElementById('desc').textContent = (meta.seo && meta.seo.description) ? meta.seo.description : "";
+        document.getElementById('keywords').textContent = (meta.seo && meta.seo.keywords) ? meta.seo.keywords.join(", ") : "";
+        document.getElementById('hashtags').textContent = (meta.seo && meta.seo.hashtags) ? meta.seo.hashtags.join(" ") : "";
+
+        document.getElementById('thumbText').textContent = `Text overlay: ${(meta.thumbnail && meta.thumbnail.text_overlay) ? meta.thumbnail.text_overlay : ""}`;
+        document.getElementById('thumbPrompt').textContent = `Prompt: ${(meta.thumbnail && meta.thumbnail.prompt) ? meta.thumbnail.prompt : ""}`;
+      } else {
+        document.getElementById('titles').textContent = "";
+        document.getElementById('desc').textContent = "";
+        document.getElementById('keywords').textContent = "";
+        document.getElementById('hashtags').textContent = "";
+        document.getElementById('thumbText').textContent = "";
+        document.getElementById('thumbPrompt').textContent = "";
+      }
+    }
+
+    document.getElementById('run').onclick = async () => {
+      await fetch(`/admin/api/projects/${id}/run`, { method: "POST" });
+      // reload after a short delay (worker time)
+      setTimeout(load, 1500);
+    };
+
+    document.getElementById('reload').onclick = load;
+
+    function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[m]));}
+
+    load().catch(e => {
+      document.getElementById('script').textContent = e.message;
+      document.getElementById('scenes').textContent = e.message;
+    });
+  </script>
+</body>
+</html>

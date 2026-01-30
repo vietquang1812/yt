@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Projects</title>
+  <style>
+    body{font-family:system-ui,Arial;margin:24px}
+    a{color:#0b62d6;text-decoration:none}
+    .row{padding:10px 0;border-bottom:1px solid #eee}
+    .meta{opacity:.7;font-size:12px}
+    .topbar{display:flex;gap:12px;align-items:center;margin-bottom:16px}
+    .btn{border:1px solid #ddd;padding:6px 10px;border-radius:8px;background:#fff;cursor:pointer}
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <h1 style="margin:0">Projects</h1>
+    <a class="btn" href="/queues">Open Bull Queues</a>
+  </div>
+
+  <div id="list">Loading…</div>
+
+  <script>
+    fetch('/admin/api/projects')
+      .then(r => r.json())
+      .then(ps => {
+        document.getElementById('list').innerHTML = ps.map(p => `
+          <div class="row">
+            <div><a href="/admin/project.html?id=${p.id}">${escapeHtml(p.topic || '(no topic)')}</a></div>
+            <div class="meta">${escapeHtml(p.status || '')} • ${new Date(p.createdAt).toLocaleString()}</div>
+          </div>
+        `).join('');
+      })
+      .catch(e => document.getElementById('list').textContent = e.message);
+
+    function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[m]));}
+  </script>
+</body>
+</html>
