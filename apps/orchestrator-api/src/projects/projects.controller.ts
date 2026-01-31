@@ -6,9 +6,11 @@ type CreateProjectDto = {
   topic: string;
   language?: string;
   durationMinutes?: number;
-  format?: string; // "youtube_long" | "shorts" (tuỳ bạn)
+  format?: string;
   tone?: string;
   pillar?: string;
+  seriesId?: string;
+  continuityMode?: "none" | "light" | "occasionally_strong";
 };
 
 @Controller("projects")
@@ -16,8 +18,8 @@ export class ProjectsController {
   constructor(
     private readonly projects: ProjectsService,
     private readonly pipeline: PipelineService
-  ) {}
-  
+  ) { }
+
   @Get()
   list() {
     return this.projects.list();
@@ -31,6 +33,12 @@ export class ProjectsController {
   @Post(":id/run")
   run(@Param("id") id: string) {
     return this.pipeline.run(id);
+  }
+
+  // NEW: manual refine button (run refine then QA)
+  @Post(":id/refine")
+  refine(@Param("id") id: string) {
+    return this.pipeline.refine(id);
   }
 
   @Get(":id")

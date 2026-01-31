@@ -5,7 +5,8 @@ export type PromptName =
   | "script_generate"
   | "script_refine"
   | "script_finalize"
-  | "content_pack_generate";
+  | "content_pack_generate"
+  | "script_qa";
 
 export async function loadPrompt(name: PromptName) {
   const base = process.env.PROMPT_DIR || "configs/prompts";

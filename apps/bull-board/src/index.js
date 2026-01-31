@@ -19,9 +19,9 @@ const REDIS_PORT = Number(process.env.REDIS_PORT || 6379);
 const ORCH_API = process.env.ORCH_API || "http://localhost:3000";
 
 const connection = new IORedis({
-  host: REDIS_HOST,
-  port: REDIS_PORT,
-  maxRetriesPerRequest: null
+    host: REDIS_HOST,
+    port: REDIS_PORT,
+    maxRetriesPerRequest: null
 });
 
 const names = ["pipeline", "llm", "assets", "media"];
@@ -31,12 +31,13 @@ const queues = names.map((n) => new Queue(n, { connection }));
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath("/queues");
 createBullBoard({
-  queues: queues.map((q) => new BullMQAdapter(q)),
-  serverAdapter
+    queues: queues.map((q) => new BullMQAdapter(q)),
+    serverAdapter
 });
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: "2mb" }));
+app.use(express.urlencoded({ extended: true }));
 
 // --------------------
 // Admin static pages
@@ -47,26 +48,35 @@ app.use("/admin", express.static(path.join(__dirname, "../public/admin")));
 // Admin API proxy -> orchestrator-api
 // --------------------
 async function proxy(req, res, targetPath, options = {}) {
-  const url = `${ORCH_API}${targetPath}`;
-  const r = await fetch(url, {
-    method: options.method || "GET",
-    headers: { "content-type": "application/json" },
-    body: options.body ? JSON.stringify(options.body) : undefined
-  });
-  const text = await r.text();
-  res.status(r.status).send(text);
+    const url = `${ORCH_API}${targetPath}`;
+    const r = await fetch(url, {
+        method: options.method || "GET",
+        headers: { "content-type": "application/json" },
+        body: options.body ? JSON.stringify(options.body) : undefined
+    });
+    const text = await r.text();
+    res.status(r.status).send(text);
 }
+app.get("/admin/api/series", (req, res) => proxy(req, res, `/series`));
+app.get("/admin/api/series/:id", (req, res) => proxy(req, res, `/series/${req.params.id}`));
+app.post("/admin/api/series", (req, res) => proxy(req, res, `/series`, { method: "POST", body: req.body }));
 
 app.get("/admin/api/projects", (req, res) => proxy(req, res, `/projects`));
+app.post("/admin/api/projects", (req, res) =>
+  proxy(req, res, "/projects", { method: "POST", body: req.body })
+);
 app.get("/admin/api/projects/:id", (req, res) => proxy(req, res, `/projects/${req.params.id}`));
 app.get("/admin/api/projects/:id/artifacts", (req, res) =>
-  proxy(req, res, `/projects/${req.params.id}/artifacts`)
+    proxy(req, res, `/projects/${req.params.id}/artifacts`)
 );
 app.get("/admin/api/projects/:id/artifacts/:artifactId/content", (req, res) =>
-  proxy(req, res, `/projects/${req.params.id}/artifacts/${req.params.artifactId}/content`)
+    proxy(req, res, `/projects/${req.params.id}/artifacts/${req.params.artifactId}/content`)
 );
 app.post("/admin/api/projects/:id/run", (req, res) =>
-  proxy(req, res, `/projects/${req.params.id}/run`, { method: "POST" })
+    proxy(req, res, `/projects/${req.params.id}/run`, { method: "POST" })
+);
+app.post("/admin/api/projects/:id/refine", (req, res) =>
+    proxy(req, res, `/projects/${req.params.id}/refine`, { method: "POST" })
 );
 
 // --------------------

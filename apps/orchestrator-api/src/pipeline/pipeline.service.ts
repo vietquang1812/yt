@@ -15,13 +15,11 @@ export class PipelineService {
     const cfg = loadPipelineConfig();
     const ordered = topoSortSteps(cfg.pipeline);
 
-    // MVP: enqueue tuần tự theo thứ tự phụ thuộc
-    // (worker sẽ xử lý, trạng thái job/artifact cập nhật sau)
     const jobs = [];
     for (const step of ordered) {
       const job = await this.queue.enqueueStep({
         projectId,
-        step: step.name as any, // nếu bạn có union type PipelineStep thì map ở đây
+        step: step.name as any,
       });
       jobs.push({ step: step.name, jobId: job.id });
     }
@@ -32,5 +30,20 @@ export class PipelineService {
       steps: ordered.map(s => s.name),
       jobs,
     };
+  }
+
+  // NEW: manual refine flow (button in UI)
+  async refine(projectId: string) {
+    const project = await prisma.project.findUnique({ where: { id: projectId } });
+    if (!project) throw new NotFoundException("Project not found");
+
+    const jobs = [];
+    const refineJob = await this.queue.enqueueStep({ projectId, step: "script_refine" });
+    jobs.push({ step: "script_refine", jobId: refineJob.id });
+
+    const qaJob = await this.queue.enqueueStep({ projectId, step: "script_qa" });
+    jobs.push({ step: "script_qa", jobId: qaJob.id });
+
+    return { ok: true, projectId, jobs };
   }
 }

@@ -30,31 +30,62 @@ enum ArtifactType {
   SCRIPT_DRAFT_JSON
   SCRIPT_REFINED_JSON
   SCRIPT_FINAL_MD
-  QA_REPORT_JSON 
-  IDEA_JSON 
-  VOICE_WAV 
-  TIMESTAMPS_JSON 
-  SCENE_PLAN_JSON 
-  VIDEO_FINAL_MP4 
-  SHORT_MP4 
-  THUMB_PNG 
-  METADATA_JSON 
-}
-enum JobStatus { 
-  QUEUED 
-  RUNNING 
-  SUCCEEDED 
-  FAILED 
+  QA_REPORT_JSON
+  IDEA_JSON
+  VOICE_WAV
+  TIMESTAMPS_JSON
+  SCENE_PLAN_JSON
+  VIDEO_FINAL_MP4
+  SHORT_MP4
+  THUMB_PNG
+  METADATA_JSON
 }
 
-  model Project {
+enum JobStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+model Series {
+  id        String   @id @default(uuid())
+  name      String
+  // "Series Bible" lưu dạng JSON: theme, tone, motifs, dos/donts, CTA style...
+  bible     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projects  Project[]
+  memory    SeriesMemory?
+}
+
+model SeriesMemory {
+  id        String   @id @default(uuid())
+  seriesId  String   @unique
+  series    Series   @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+
+  // tóm tắt + open loops + callbacks + motifs đang dùng
+  memory    Json
+  updatedAt DateTime @updatedAt
+}
+
+model Project {
   id              String   @id @default(uuid())
   topic           String
   language        String   @default("en")
   durationMinutes Int      @default(6)
-  format          String   @default("youtube_long") // hoặc enum nếu muốn
-  tone            String?  // optional
-  pillar          String?  // optional
+  format          String   @default("youtube_long")
+  tone            String?
+  pillar          String?
+
+  // NEW: link to Series
+  seriesId        String?
+  series          Series?  @relation(fields: [seriesId], references: [id], onDelete: SetNull)
+
+  // NEW: continuity control
+  // "none" | "light" | "occasionally_strong"
+  continuityMode  String   @default("light")
 
   status          ProjectStatus @default(IDEA_SELECTED)
   createdAt       DateTime @default(now())
@@ -63,6 +94,8 @@ enum JobStatus {
   artifacts       Artifact[]
   jobs            Job[]
   analytics       Analytics[]
+
+  @@index([seriesId])
 }
 
 model Artifact {
@@ -105,6 +138,8 @@ model Analytics {
   views7d         Int?
   subsGained7d    Int?
   capturedAt      DateTime @default(now())
+
+  createdAt       DateTime @default(now())
 
   @@index([projectId, capturedAt])
 }

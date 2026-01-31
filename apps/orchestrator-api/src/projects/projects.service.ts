@@ -9,6 +9,8 @@ type CreateProjectDto = {
   format?: string;
   tone?: string;
   pillar?: string;
+  seriesId?: string;
+  continuityMode?: "none" | "light" | "occasionally_strong";
 };
 
 @Injectable()
@@ -35,6 +37,8 @@ export class ProjectsService {
         tone: dto.tone,
         pillar: dto.pillar,
         status: ProjectStatus.IDEA_SELECTED,
+        seriesId: dto.seriesId ?? null,
+        continuityMode: dto.continuityMode ?? "light",
       },
     });
   }
@@ -42,7 +46,7 @@ export class ProjectsService {
   async get(id: string) {
     const p = await prisma.project.findUnique({
       where: { id },
-      include: { artifacts: true, jobs: true, analytics: true },
+      include: { artifacts: true, jobs: true, analytics: true,series: true },
     });
     if (!p) throw new NotFoundException("Project not found");
     return p;
@@ -61,7 +65,7 @@ export class ProjectsService {
 
     const buf = await fs.readFile(artifact.uri);
 
-    const textTypes = new Set(["SCRIPT_FINAL_MD", "SCENE_PLAN_JSON", "METADATA_JSON"]);
+    const textTypes = new Set(["SCRIPT_FINAL_MD", "SCENE_PLAN_JSON", "METADATA_JSON", "QA_REPORT_JSON"]);
     if (textTypes.has(artifact.type)) {
       return { id: artifact.id, type: artifact.type, content: buf.toString("utf8") };
     }

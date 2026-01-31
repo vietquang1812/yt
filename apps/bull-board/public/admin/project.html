@@ -1,170 +1,487 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Project</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Project • Admin</title>
+
+  <!-- Bootstrap 5 (CDN) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
   <style>
-    body{font-family:system-ui,Arial;margin:24px;max-width:1100px}
-    a{color:#0b62d6;text-decoration:none}
-    .btn{border:1px solid #ddd;padding:6px 10px;border-radius:8px;background:#fff;cursor:pointer}
-    .tabs{display:flex;gap:8px;margin:14px 0}
-    .tab{border:1px solid #ddd;padding:6px 10px;border-radius:8px;background:#fff;cursor:pointer}
-    .active{background:#f3f3f3}
-    pre{white-space:pre-wrap;line-height:1.5;border:1px solid #eee;padding:12px;border-radius:10px}
-    .card{border:1px solid #eee;padding:12px;border-radius:10px;margin:10px 0}
-    .muted{opacity:.75}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    body { background: #0b1220; }
+    .app-shell { max-width: 1100px; }
+    .card { border: 0; border-radius: 16px; }
+    .muted { color: rgba(255,255,255,.65); }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    /* .soft-glow {
+      background: radial-gradient(1200px 600px at 10% 10%, rgba(99,102,241,.18), transparent 60%),
+                  radial-gradient(900px 500px at 90% 0%, rgba(56,189,248,.14), transparent 55%);
+    } */
+    .badge-soft {
+      background: rgba(255,255,255,.08) !important;
+      border: 1px solid rgba(255,255,255,.12);
+      color: rgba(255,255,255,.85);
+    }
+    .btn-soft {
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12);
+      color: rgba(255,255,255,.9);
+    }
+    .btn-soft:hover { background: rgba(255,255,255,.12); }
+    .table td, .table th { vertical-align: middle; }
+    pre { white-space: pre-wrap; word-break: break-word; }
+    a { text-decoration: none; }
+    a:hover { text-decoration: underline; }
   </style>
 </head>
-<body>
-  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
-    <div>
-      <a href="/admin/projects.html">← Back</a>
-      <h1 id="topic" style="margin:8px 0 4px 0"></h1>
-      <div class="muted" id="status"></div>
-    </div>
-    <div style="display:flex;gap:8px">
-      <a class="btn" href="/queues">Queues</a>
-      <button class="btn" id="run">Run pipeline</button>
-      <button class="btn" id="reload">Reload</button>
-    </div>
-  </div>
 
-  <div class="tabs">
-    <button class="tab active" data-tab="script">Script</button>
-    <button class="tab" data-tab="scenes">Scenes</button>
-    <button class="tab" data-tab="seo">SEO + Thumbnail</button>
-  </div>
+<body class="text-white soft-glow">
+  <div class="container app-shell py-4">
 
-  <div id="view-script">
-    <pre id="script">Loading…</pre>
-  </div>
-
-  <div id="view-scenes" style="display:none">
-    <div id="scenes">Loading…</div>
-  </div>
-
-  <div id="view-seo" style="display:none">
-    <div class="grid">
-      <div class="card">
-        <div><b>Title variants</b></div>
-        <div id="titles" class="muted"></div>
+    <!-- Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+      <div>
+        <div class="d-flex align-items-center gap-2">
+          <a class="link-light opacity-75" href="/admin/projects.html">← Projects</a>
+          <span class="opacity-50">/</span>
+          <span class="fw-semibold">Project</span>
+        </div>
+        <h1 class="h4 mt-2 mb-1">Content Pipeline</h1>
+        <div class="muted">Orchestrator API • BullMQ • Worker</div>
       </div>
-      <div class="card">
-        <div><b>Thumbnail</b></div>
-        <div class="muted" id="thumbText"></div>
-        <div class="muted" id="thumbPrompt" style="margin-top:8px"></div>
+
+      <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-soft" href="/queues" target="_blank" rel="noreferrer">Open Queues</a>
+        <button id="runBtn" class="btn btn-primary">
+          <span class="me-2">Run pipeline</span>
+          <span id="runSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+        </button>
+        <button id="refineBtn" class="btn btn-warning text-dark d-none">
+          <span class="me-2">Refine & Re-QA</span>
+          <span id="refineSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+        </button>
       </div>
     </div>
 
-    <div class="card">
-      <div><b>SEO description</b></div>
-      <div id="desc" class="muted" style="white-space:pre-wrap;margin-top:6px"></div>
-    </div>
+    <!-- Status / QA Banner -->
+    <div id="statusRow" class="mb-3"></div>
 
-    <div class="grid">
-      <div class="card">
-        <div><b>Keywords</b></div>
-        <div id="keywords" class="muted"></div>
+    <!-- Main content -->
+    <div class="row g-3">
+      <!-- Left: Project info -->
+      <div class="col-12 col-lg-5">
+        <div class="card bg-dark text-white">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="muted small">Project ID</div>
+                <div id="projectId" class="mono"></div>
+              </div>
+              <span id="statusBadge" class="badge badge-soft">—</span>
+            </div>
+
+            <hr class="border-secondary border-opacity-25">
+
+            <div class="mb-2">
+              <div class="muted small">Topic</div>
+              <div id="topic" class="fw-semibold">—</div>
+            </div>
+
+            <div class="row g-2">
+              <div class="col-6">
+                <div class="muted small">Language</div>
+                <div id="language">—</div>
+              </div>
+              <div class="col-6">
+                <div class="muted small">Format</div>
+                <div id="format">—</div>
+              </div>
+              <div class="col-6">
+                <div class="muted small">Duration</div>
+                <div id="duration">—</div>
+              </div>
+              <div class="col-6">
+                <div class="muted small">Pillar/Angle</div>
+                <div id="pillar">—</div>
+              </div>
+            </div>
+
+            <hr class="border-secondary border-opacity-25">
+
+            <div class="d-flex flex-wrap gap-2">
+              <a id="openScriptBtn" class="btn btn-soft d-none" target="_blank" rel="noreferrer">Open script_final.md</a>
+              <a id="openMetaBtn" class="btn btn-soft d-none" target="_blank" rel="noreferrer">Open metadata.json</a>
+              <a id="openQaBtn" class="btn btn-soft d-none" target="_blank" rel="noreferrer">Open qa_report.json</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- QA details -->
+        <div class="card bg-dark text-white mt-3 d-none" id="qaCard">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="fw-semibold">QA Report</div>
+                <div id="qaSummary" class="muted small mt-1">—</div>
+              </div>
+              <span id="qaBadge" class="badge">—</span>
+            </div>
+
+            <hr class="border-secondary border-opacity-25">
+
+            <div class="muted small mb-2">Issues</div>
+            <pre id="qaIssues" class="mb-0"></pre>
+          </div>
+        </div>
       </div>
-      <div class="card">
-        <div><b>Hashtags</b></div>
-        <div id="hashtags" class="muted"></div>
+
+      <!-- Right: Artifacts -->
+      <div class="col-12 col-lg-7">
+        <div class="card bg-dark text-white">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div class="fw-semibold">Artifacts</div>
+              <div class="muted small" id="lastUpdated">—</div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table table-dark table-hover align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th style="width: 24%">Type</th>
+                    <th>Filename</th>
+                    <th style="width: 18%">Created</th>
+                    <th style="width: 16%"></th>
+                  </tr>
+                </thead>
+                <tbody id="artifactsTbody">
+                  <tr><td colspan="4" class="muted">Loading…</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="card bg-dark text-white mt-3">
+          <div class="card-body">
+            <div class="fw-semibold mb-2">Live status</div>
+            <div class="muted small">
+              This page auto-checks QA results every few seconds after you click <span class="text-white">Run pipeline</span> or <span class="text-white">Refine &amp; Re-QA</span>.
+              When QA becomes <span class="text-white">approved</span>, it will auto-reload.
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
 
   <script>
-    const id = new URLSearchParams(location.search).get('id');
+    // -----------------------------
+    // Helpers
+    // -----------------------------
+    const qs = new URLSearchParams(location.search);
+    const id = qs.get("id");
 
-    const tabs = document.querySelectorAll('.tab');
-    tabs.forEach(t => t.onclick = () => {
-      tabs.forEach(x => x.classList.remove('active'));
-      t.classList.add('active');
-      const key = t.dataset.tab;
-      document.getElementById('view-script').style.display = key === 'script' ? '' : 'none';
-      document.getElementById('view-scenes').style.display = key === 'scenes' ? '' : 'none';
-      document.getElementById('view-seo').style.display = key === 'seo' ? '' : 'none';
-    });
+    const $ = (sel) => document.querySelector(sel);
 
-    function latest(arts, type) {
-      return arts.filter(a => a.type === type)
-        .sort((a,b)=> new Date(b.createdAt) - new Date(a.createdAt))[0];
+    function fmtTime(iso) {
+      try {
+        const d = new Date(iso);
+        return d.toLocaleString();
+      } catch { return iso || "—"; }
     }
 
-    async function load() {
-      const proj = await fetch(`/admin/api/projects/${id}`).then(r=>r.json());
-      document.getElementById('topic').textContent = proj.topic || id;
-      document.getElementById('status').textContent = `Status: ${proj.status || ''}`;
+    async function apiGet(url) {
+      const r = await fetch(url);
+      if (!r.ok) throw new Error(await r.text());
+      return r.json();
+    }
 
-      const arts = await fetch(`/admin/api/projects/${id}/artifacts`).then(r=>r.json());
-      const scriptArt = latest(arts, "SCRIPT_FINAL_MD");
-      const scenesArt = latest(arts, "SCENE_PLAN_JSON");
-      const metaArt = latest(arts, "METADATA_JSON");
+    async function apiPost(url) {
+      const r = await fetch(url, { method: "POST" });
+      const text = await r.text();
+      if (!r.ok) throw new Error(text);
+      return text;
+    }
 
-      // Script
+    function latestByType(arts, type) {
+      const list = arts.filter(a => a.type === type);
+      if (!list.length) return null;
+      // prefer createdAt desc if present
+      return list.sort((a,b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")))[0];
+    }
+
+    // -----------------------------
+    // UI state
+    // -----------------------------
+    let pollTimer = null;
+    let pendingAction = null; // { kind: "run"|"refine", startedAtISO: string }
+
+    function setBusy(kind, busy) {
+      if (kind === "run") {
+        $("#runBtn").disabled = busy;
+        $("#runSpinner").classList.toggle("d-none", !busy);
+      }
+      if (kind === "refine") {
+        $("#refineBtn").disabled = busy;
+        $("#refineSpinner").classList.toggle("d-none", !busy);
+      }
+    }
+
+    function renderStatusAlert(html, variant="info") {
+      $("#statusRow").innerHTML = `
+        <div class="alert alert-${variant} border-0 rounded-4 mb-0" role="alert">
+          ${html}
+        </div>
+      `;
+    }
+
+    function clearStatusAlert() {
+      $("#statusRow").innerHTML = "";
+    }
+
+    function startPolling() {
+      stopPolling();
+      pollTimer = setInterval(async () => {
+        try {
+          const { artifacts, qaReport } = await loadArtifactsAndQA();
+          if (!pendingAction) return;
+
+          // only auto-resolve if QA report was created after action start (if timestamps exist)
+          const actionStart = new Date(pendingAction.startedAtISO).getTime();
+          const qaCreated = qaReport?.createdAt ? new Date(qaReport.createdAt).getTime() : null;
+
+          const isNewEnough = (qaCreated === null) ? true : (qaCreated >= actionStart);
+
+          if (qaReport && isNewEnough) {
+            if (qaReport.approved === true) {
+              renderStatusAlert(`✅ QA approved. Reloading…`, "success");
+              stopPolling();
+              setTimeout(() => location.reload(), 700);
+              return;
+            }
+            if (qaReport.approved === false) {
+              renderStatusAlert(`⚠️ QA failed. You can refine and re-run QA.`, "warning");
+              stopPolling();
+              // show refine button now
+              $("#refineBtn").classList.remove("d-none");
+              setBusy("run", false);
+              setBusy("refine", false);
+              pendingAction = null;
+              return;
+            }
+          }
+        } catch (e) {
+          // silent retry; network hiccup shouldn't kill polling
+        }
+      }, 3000);
+    }
+
+    function stopPolling() {
+      if (pollTimer) clearInterval(pollTimer);
+      pollTimer = null;
+    }
+
+    // -----------------------------
+    // Load + render
+    // -----------------------------
+    async function loadProject() {
+      if (!id) {
+        renderStatusAlert(`Missing <span class="mono">?id=</span> in URL.`, "danger");
+        return;
+      }
+      const p = await apiGet(`/admin/api/projects/${id}`);
+      $("#projectId").textContent = p.id || id;
+      $("#topic").textContent = p.topic || "—";
+      $("#language").textContent = p.language || "en";
+      $("#format").textContent = p.format || "youtube_long";
+      $("#duration").textContent = (p.durationMinutes ? `${p.durationMinutes} min` : "—");
+      $("#pillar").textContent = p.pillar || "—";
+      $("#statusBadge").textContent = p.status || "—";
+      return p;
+    }
+
+    async function loadArtifactsAndQA() {
+      const arts = await apiGet(`/admin/api/projects/${id}/artifacts`);
+      const artifacts = Array.isArray(arts) ? arts : (arts?.items || []);
+      $("#lastUpdated").textContent = `Updated: ${new Date().toLocaleTimeString()}`;
+
+      // render table
+      const tbody = $("#artifactsTbody");
+      tbody.innerHTML = "";
+
+      if (!artifacts.length) {
+        tbody.innerHTML = `<tr><td colspan="4" class="muted">No artifacts yet.</td></tr>`;
+      } else {
+        for (const a of artifacts) {
+          const viewUrl = `/admin/api/projects/${id}/artifacts/${a.id}/content`;
+          tbody.insertAdjacentHTML("beforeend", `
+            <tr>
+              <td><span class="badge badge-soft">${a.type || "—"}</span></td>
+              <td class="mono">${a.filename || "—"}</td>
+              <td class="muted">${fmtTime(a.createdAt)}</td>
+              <td class="text-end">
+                <button class="btn btn-sm btn-soft" data-view="${viewUrl}">View</button>
+              </td>
+            </tr>
+          `);
+        }
+
+        tbody.querySelectorAll("button[data-view]").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            const url = btn.getAttribute("data-view");
+            btn.disabled = true;
+            btn.textContent = "Loading…";
+            try {
+              const r = await apiGet(url);
+              // r.content is JSON string for JSON artifacts or plain text for md
+              // show in bootstrap modal-like alert
+              const text = (r && typeof r.content === "string") ? r.content : JSON.stringify(r, null, 2);
+              const w = window.open("", "_blank");
+              w.document.write(`<pre style="white-space:pre-wrap;word-break:break-word">${escapeHtml(text)}</pre>`);
+              w.document.close();
+            } finally {
+              btn.disabled = false;
+              btn.textContent = "View";
+            }
+          });
+        });
+      }
+
+      // quick links
+      const scriptArt = latestByType(artifacts, "SCRIPT_FINAL_MD");
+      const metaArt = latestByType(artifacts, "METADATA_JSON");
+      const qaArt = latestByType(artifacts, "QA_REPORT_JSON");
+
       if (scriptArt) {
-        const r = await fetch(`/admin/api/projects/${id}/artifacts/${scriptArt.id}/content`).then(r=>r.json());
-        document.getElementById('script').textContent = r.content || '';
-      } else {
-        document.getElementById('script').textContent = "No script yet.";
+        $("#openScriptBtn").classList.remove("d-none");
+        $("#openScriptBtn").href = `/admin/api/projects/${id}/artifacts/${scriptArt.id}/content`;
       }
-
-      // Scenes
-      if (scenesArt) {
-        const r = await fetch(`/admin/api/projects/${id}/artifacts/${scenesArt.id}/content`).then(r=>r.json());
-        const scenes = JSON.parse(r.content || "[]");
-        document.getElementById('scenes').innerHTML = scenes.map(s => `
-          <div class="card">
-            <div><b>#${s.id}</b> <span class="muted">${escapeHtml(s.timestamp_range || '')}</span></div>
-            <div style="margin-top:8px"><b>Narration:</b> <span class="muted">${escapeHtml(s.narration || '')}</span></div>
-            <div style="margin-top:6px"><b>Visual prompt:</b> <span class="muted">${escapeHtml(s.visual_prompt || '')}</span></div>
-            <div style="margin-top:6px"><b>On-screen text:</b> <span class="muted">${escapeHtml(s.on_screen_text || '')}</span></div>
-            ${Array.isArray(s.broll_keywords) && s.broll_keywords.length
-              ? `<div style="margin-top:6px" class="muted"><b>B-roll:</b> ${s.broll_keywords.map(escapeHtml).join(", ")}</div>`
-              : ""}
-          </div>
-        `).join('');
-      } else {
-        document.getElementById('scenes').textContent = "No scenes yet.";
-      }
-
-      // SEO + Thumbnail
       if (metaArt) {
-        const r = await fetch(`/admin/api/projects/${id}/artifacts/${metaArt.id}/content`).then(r=>r.json());
-        const meta = JSON.parse(r.content || "{}");
+        $("#openMetaBtn").classList.remove("d-none");
+        $("#openMetaBtn").href = `/admin/api/projects/${id}/artifacts/${metaArt.id}/content`;
+      }
+      if (qaArt) {
+        $("#openQaBtn").classList.remove("d-none");
+        $("#openQaBtn").href = `/admin/api/projects/${id}/artifacts/${qaArt.id}/content`;
+      }
 
-        document.getElementById('titles').textContent = (meta.title_variants || []).join(" | ");
-        document.getElementById('desc').textContent = (meta.seo && meta.seo.description) ? meta.seo.description : "";
-        document.getElementById('keywords').textContent = (meta.seo && meta.seo.keywords) ? meta.seo.keywords.join(", ") : "";
-        document.getElementById('hashtags').textContent = (meta.seo && meta.seo.hashtags) ? meta.seo.hashtags.join(" ") : "";
+      // QA report rendering
+      let qaReport = null;
+      let qaReportArtifact = null;
 
-        document.getElementById('thumbText').textContent = `Text overlay: ${(meta.thumbnail && meta.thumbnail.text_overlay) ? meta.thumbnail.text_overlay : ""}`;
-        document.getElementById('thumbPrompt').textContent = `Prompt: ${(meta.thumbnail && meta.thumbnail.prompt) ? meta.thumbnail.prompt : ""}`;
+      if (qaArt) {
+        qaReportArtifact = qaArt;
+        try {
+          const r = await apiGet(`/admin/api/projects/${id}/artifacts/${qaArt.id}/content`);
+          qaReport = JSON.parse(r.content || "{}");
+        } catch {
+          qaReport = null;
+        }
+      }
+
+      const qaCard = $("#qaCard");
+      if (qaReport) {
+        qaCard.classList.remove("d-none");
+        $("#qaSummary").textContent = qaReport.summary || "—";
+
+        const approved = qaReport.approved === true;
+        const failed = qaReport.approved === false;
+
+        $("#qaBadge").className = "badge " + (approved ? "bg-success" : failed ? "bg-danger" : "bg-secondary");
+        $("#qaBadge").textContent = approved ? "APPROVED" : failed ? "FAILED" : "UNKNOWN";
+
+        $("#qaIssues").textContent = JSON.stringify(qaReport.issues || [], null, 2);
+
+        // Show refine button only when QA failed
+        $("#refineBtn").classList.toggle("d-none", !failed);
+
+        if (failed) {
+          renderStatusAlert(`⚠️ QA failed. Review issues and click <b>Refine &amp; Re-QA</b>.`, "warning");
+        } else if (approved) {
+          clearStatusAlert();
+        }
       } else {
-        document.getElementById('titles').textContent = "";
-        document.getElementById('desc').textContent = "";
-        document.getElementById('keywords').textContent = "";
-        document.getElementById('hashtags').textContent = "";
-        document.getElementById('thumbText').textContent = "";
-        document.getElementById('thumbPrompt').textContent = "";
+        qaCard.classList.add("d-none");
+      }
+
+      return { artifacts, qaReport: qaReport ? { ...qaReport, createdAt: qaReportArtifact?.createdAt } : null };
+    }
+
+    function escapeHtml(str) {
+      return (str || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
+    }
+
+    async function refreshAll() {
+      await loadProject();
+      return loadArtifactsAndQA();
+    }
+
+    // -----------------------------
+    // Actions
+    // -----------------------------
+    async function onRun() {
+      pendingAction = { kind: "run", startedAtISO: new Date().toISOString() };
+      renderStatusAlert(`⏳ Running pipeline… This page will auto-reload after QA approves.`, "info");
+      setBusy("run", true);
+      setBusy("refine", true);
+
+      try {
+        await apiPost(`/admin/api/projects/${id}/run`);
+        await refreshAll();
+        startPolling();
+      } catch (e) {
+        pendingAction = null;
+        setBusy("run", false);
+        setBusy("refine", false);
+        renderStatusAlert(`❌ Run failed: <span class="mono">${escapeHtml(String(e.message || e))}</span>`, "danger");
       }
     }
 
-    document.getElementById('run').onclick = async () => {
-      await fetch(`/admin/api/projects/${id}/run`, { method: "POST" });
-      // reload after a short delay (worker time)
-      setTimeout(load, 1500);
-    };
+    async function onRefine() {
+      pendingAction = { kind: "refine", startedAtISO: new Date().toISOString() };
+      renderStatusAlert(`✨ Refining… This page will auto-reload after QA approves.`, "info");
+      setBusy("run", true);
+      setBusy("refine", true);
 
-    document.getElementById('reload').onclick = load;
+      try {
+        await apiPost(`/admin/api/projects/${id}/refine`);
+        await refreshAll();
+        startPolling();
+      } catch (e) {
+        pendingAction = null;
+        setBusy("run", false);
+        setBusy("refine", false);
+        renderStatusAlert(`❌ Refine failed: <span class="mono">${escapeHtml(String(e.message || e))}</span>`, "danger");
+      }
+    }
 
-    function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[m]));}
+    // -----------------------------
+    // Boot
+    // -----------------------------
+    (async function boot() {
+      if (!id) {
+        renderStatusAlert(`Missing <span class="mono">?id=</span> in URL.`, "danger");
+        return;
+      }
 
-    load().catch(e => {
-      document.getElementById('script').textContent = e.message;
-      document.getElementById('scenes').textContent = e.message;
-    });
+      $("#runBtn").addEventListener("click", onRun);
+      $("#refineBtn").addEventListener("click", onRefine);
+
+      try {
+        await refreshAll();
+      } catch (e) {
+        renderStatusAlert(`❌ Load failed: <span class="mono">${escapeHtml(String(e.message || e))}</span>`, "danger");
+      }
+    })();
   </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

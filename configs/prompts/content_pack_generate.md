@@ -83,3 +83,18 @@ FINAL CHECK (before you output JSON):
 - Parts 2–6 begin with one transitional sentence.
 - No repetition between parts.
 - Output must be strictly valid JSON, nothing else.
+
+SERIES MODE:
+- Series Bible (JSON):
+{{series_bible_json}}
+
+- Series Memory (JSON):
+{{series_memory_json}}
+
+Continuity Mode: {{continuity_mode}}
+
+Continuity rules:
+- Always stay within the series theme and voice.
+- If continuity_mode is "light": add ONE subtle callback to a previous video (one sentence max).
+- If continuity_mode is "occasionally_strong": add ONE stronger callback OR a resolved open loop occasionally, but do not force it.
+- If continuity_mode is "none": no callbacks, no open loops.
