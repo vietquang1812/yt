@@ -1,0 +1,15 @@
+character:
+  id: main_host
+  base_identity: >
+    A friendly male host with a consistent face identity,
+    clean haircut, warm confident smile.
+  cultural_tone: westernized, global, neutral
+  age_range: 25-35
+  role: narrator / explainer
+
+face_lock:
+  must_include_phrase: "same face as reference character, identical facial features"
+  rules:
+    - never change face shape
+    - never change eye shape or position
+    - never change hairstyle

@@ -1,6 +1,7 @@
 node_modules
 dist
 .env
+.next
 storage/projects/*
 !.keep
 .DS_Store

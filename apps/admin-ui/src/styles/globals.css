@@ -1,0 +1,4 @@
+/* Bootstrap imported in layout.tsx */
+html, body {
+  height: 100%;
+}

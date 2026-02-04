@@ -44,6 +44,19 @@ app.use(express.urlencoded({ extended: true }));
 // --------------------
 app.use("/admin", express.static(path.join(__dirname, "../public/admin")));
 
+const ADMIN_UI = process.env.ADMIN_UI || "http://localhost:4100";
+// thay vì express.static("/admin"...)
+app.use("/admin", async (req, res) => {
+  const url = `${ADMIN_UI}${req.originalUrl.replace(/^\/admin/, "") || "/"}`;
+  const r = await fetch(url, { method: req.method, headers: req.headers });
+  const buf = await r.arrayBuffer();
+  res.status(r.status);
+  r.headers.forEach((v, k) => res.setHeader(k, v));
+  res.send(Buffer.from(buf));
+});
+
+// root redirect
+app.get("/", (_req, res) => res.redirect("/admin/projects"));
 // --------------------
 // Admin API proxy -> orchestrator-api
 // --------------------
@@ -84,7 +97,7 @@ app.post("/admin/api/projects/:id/refine", (req, res) =>
 // --------------------
 app.use("/queues", serverAdapter.getRouter());
 
-app.get("/", (_req, res) => res.redirect("/admin/projects.html"));
+// app.get("/", (_req, res) => res.redirect("/admin/projects.html"));
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
 app.listen(PORT, () => console.log(`Admin http://localhost:${PORT}/admin/projects.html | Queues http://localhost:${PORT}/queues`));

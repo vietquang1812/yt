@@ -6,7 +6,7 @@ import { llmComplete } from "../lib/llmClient";
 import { saveArtifact } from "../lib/artifacts";
 import fs from "node:fs/promises";
 
-type PipelineStep = "metadata_generate" | "script_refine" | "script_qa" | "thumbnail_generate";
+type PipelineStep = "metadata_generate" | "script_refine" | "script_qa" | "thumbnail_generate" | "script_segments_generate";
 
 async function setProgress(job: Job, value: number, msg?: string) {
   const v = Math.max(0, Math.min(100, Math.round(value)));
@@ -36,6 +36,11 @@ async function loadSeriesContext(projectId: string) {
     seriesMemory,
     seriesId: project.seriesId ?? null,
   };
+}
+
+async function readArtifactTextByUri(uri: string) {
+  const buf = await fs.readFile(uri);
+  return buf.toString("utf8");
 }
 
 async function upsertSeriesMemory(seriesId: string, memory: any) {
@@ -241,6 +246,55 @@ export async function handlePipelineJob(job: Job<any>) {
     await setProgress(job, 100, "done");
     return;
   }
+
+  if (step === "script_segments_generate") {
+    await setProgress(job, 10, "loading latest script + character");
+
+    const scriptArt = await getLatestArtifact(projectId, ArtifactType.SCRIPT_FINAL_MD);
+    if (!scriptArt) throw new Error("script_segments_generate: missing SCRIPT_FINAL_MD");
+
+    const scriptText = await readArtifactTextByUri(scriptArt.uri);
+
+    const tmpl = await loadPrompt("script_segments_generate");
+    const characterYaml = await loadConfigText("character.yaml");
+
+    // Extract face_lock phrase from yaml crudely (simple MVP)
+    const faceLockPhrase = "same face as reference character, identical facial features";
+
+    const prompt = renderTemplate(tmpl, {
+      script_text: scriptText,
+      character_yaml: characterYaml,
+      face_lock_phrase: faceLockPhrase
+    });
+
+    await setProgress(job, 45, "calling llm");
+    const resp = await llmComplete(prompt);
+
+    let out: any;
+    try {
+      out = JSON.parse(resp.text);
+    } catch {
+      throw new Error("script_segments_generate: model did not return valid JSON");
+    }
+
+    if (!Array.isArray(out?.segments)) {
+      throw new Error("script_segments_generate: invalid JSON schema, missing segments[]");
+    }
+
+    await setProgress(job, 80, "saving script_segments.json");
+
+    await saveArtifact({
+      projectId,
+      type: ArtifactType.SCRIPT_SEGMENTS_JSON,
+      filename: "script_segments.json",
+      content: Buffer.from(JSON.stringify(out, null, 2), "utf8"),
+      meta: { step: "script_segments_generate", sourceScriptArtifactId: scriptArt.id }
+    });
+
+    await setProgress(job, 100, "done");
+    return;
+  }
+
 
   // -------------------------
   // STEP: script_refine (manual trigger)

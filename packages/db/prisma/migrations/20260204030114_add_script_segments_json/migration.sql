@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "ArtifactType" ADD VALUE 'SCRIPT_SEGMENTS_JSON';

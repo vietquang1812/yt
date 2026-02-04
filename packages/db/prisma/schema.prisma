@@ -39,6 +39,7 @@ enum ArtifactType {
   SHORT_MP4
   THUMB_PNG
   METADATA_JSON
+  SCRIPT_SEGMENTS_JSON
 }
 
 enum JobStatus {

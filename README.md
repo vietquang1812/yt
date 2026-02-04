@@ -26,4 +26,6 @@ pnpm dev:api
 pnpm dev:worker
 # in another terminal:
 pnpm dev:bull
+# start UI admin 
+pnpm -C apps/admin-ui dev
 ```

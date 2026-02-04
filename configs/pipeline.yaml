@@ -1,3 +1,5 @@
 pipeline:
   - name: metadata_generate
   - name: script_qa
+  - name: script_segments_generate
+    depends_on: [metadata_generate]
