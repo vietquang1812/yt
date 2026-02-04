@@ -15,6 +15,6 @@ lệnh 5: Tôi muốn nội dung được viết bằng ngôn ngữ tiếng Anh 
 
 Get-ChildItem yt-ai-system-full -Recurse -Force |
 Where-Object {
-  $_.FullName -notmatch "node_modules|\.git|\.next|build|dist|coverage|.vscode|.env"
+  $_.FullName -notmatch "node_modules|\.git|\.next|build|dist|coverage|.vscode|.env|.next"
 } |
 Compress-Archive -DestinationPath app.zip -Force

@@ -91,7 +91,9 @@ app.post("/admin/api/projects/:id/run", (req, res) =>
 app.post("/admin/api/projects/:id/refine", (req, res) =>
     proxy(req, res, `/projects/${req.params.id}/refine`, { method: "POST" })
 );
-
+app.post("/admin/api/projects/:id/status", (req, res) =>
+  proxy(req, res, `/projects/${req.params.id}/status`, { method: "POST", body: req.body })
+);
 // --------------------
 // Bull board UI
 // --------------------

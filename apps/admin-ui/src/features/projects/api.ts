@@ -20,6 +20,12 @@ export function createProject(body: CreateProjectDto) {
   });
 }
 
+export function setProjectStatus(projectId: string, status: string) {
+  return apiFetch<ProjectDto>(`/api/projects/${projectId}/status`, {
+    method: "POST",
+    body: JSON.stringify({ status }),
+  });
+}
 
 export function getProject(projectId: string) {
   return apiFetch<ProjectDto>(`/api/projects/${projectId}`);

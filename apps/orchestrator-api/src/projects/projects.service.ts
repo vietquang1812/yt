@@ -12,6 +12,14 @@ type CreateProjectDto = {
   seriesId?: string;
   continuityMode?: "none" | "light" | "occasionally_strong";
 };
+const textTypes = new Set([
+  "SCRIPT_FINAL_MD",
+  "SCENE_PLAN_JSON",
+  "METADATA_JSON",
+  "QA_REPORT_JSON",
+  "SCRIPT_SEGMENTS_JSON",
+]);
+
 
 @Injectable()
 export class ProjectsService {
@@ -19,6 +27,23 @@ export class ProjectsService {
     return prisma.project.findMany({
       orderBy: { createdAt: "desc" },
       select: { id: true, topic: true, status: true, createdAt: true }
+    });
+  }
+  async updateStatus(id: string, status: ProjectStatus) {
+    const allowed = new Set<ProjectStatus>([
+      ProjectStatus.IDEA_SELECTED,
+      ProjectStatus.SCENES_PLANNED,   // đang thực hiện video
+      ProjectStatus.VIDEO_RENDERED,   // đã hoàn thành
+      ProjectStatus.PUBLISHED,        // đã public
+    ]);
+
+    if (!allowed.has(status)) {
+      throw new BadRequestException(`Invalid status for manual update: ${status}`);
+    }
+
+    return prisma.project.update({
+      where: { id },
+      data: { status },
     });
   }
 
@@ -46,7 +71,7 @@ export class ProjectsService {
   async get(id: string) {
     const p = await prisma.project.findUnique({
       where: { id },
-      include: { artifacts: true, jobs: true, analytics: true,series: true },
+      include: { artifacts: true, jobs: true, analytics: true, series: true },
     });
     if (!p) throw new NotFoundException("Project not found");
     return p;

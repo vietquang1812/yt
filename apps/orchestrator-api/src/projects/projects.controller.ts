@@ -30,6 +30,12 @@ export class ProjectsController {
     return this.projects.create(dto);
   }
 
+  @Post(":id/status")
+  setStatus(@Param("id") id: string, @Body() dto: { status: string }) {
+    return this.projects.updateStatus(id, dto.status as any);
+  }
+
+
   @Post(":id/run")
   run(@Param("id") id: string) {
     return this.pipeline.run(id);
