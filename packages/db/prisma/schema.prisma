@@ -10,21 +10,30 @@ datasource db {
 
 enum ProjectStatus {
   IDEA_SELECTED
-  SCRIPT_QA_PASSED
+
+  // content pack / script
+  METADATA_READY          // metadata_generate done (script_final + metadata.json + scene_plan + next_ideas)
+  SCRIPT_QA_PASSED        // script_qa approved
+  SCRIPT_SEGMENTS_READY   // script_segments_generate done
+  SCRIPT_REFINED          // script_refine done
+  SCRIPT_FINALIZED        // (optional) when you lock final script for production
+
+  // production media
   VOICE_RENDERED
   SCENES_PLANNED
   ASSETS_FETCHED
   VIDEO_RENDERED
   SHORTS_RENDERED
   THUMBNAIL_READY
-  METADATA_READY
+
+  // publish lifecycle
   SCHEDULED
   PUBLISHED
   ANALYTICS_INGESTED
-  SCRIPT_REFINED
-  SCRIPT_FINALIZED
+
   FAILED
 }
+
 
 enum ArtifactType {
   SCRIPT_DRAFT_JSON
@@ -55,6 +64,8 @@ model Series {
   name      String
   // "Series Bible" lưu dạng JSON: theme, tone, motifs, dos/donts, CTA style...
   bible     Json
+  disabled  Boolean  @default(false) 
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

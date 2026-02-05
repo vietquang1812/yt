@@ -107,6 +107,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: "6379"
       ORCH_API: http://orchestrator-api:3000
+      ADMIN_UI: ""
     ports:
       - "4000:4000"
     depends_on:

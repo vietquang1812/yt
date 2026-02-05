@@ -54,6 +54,17 @@ export class ProjectsService {
       throw new BadRequestException("topic is required");
     }
 
+    let seriesId: string | null = dto.seriesId ?? null;
+
+    if (seriesId) {
+      const series = await prisma.series.findUnique({ where: { id: seriesId } });
+      if (!series) throw new BadRequestException("seriesId not found");
+      if ((series as any).disabled) {
+        // luật: series disabled => không được dùng cho project tiếp theo
+        throw new BadRequestException("series is disabled; cannot be used for new projects");
+      }
+    }
+
     return prisma.project.create({
       data: {
         topic: dto.topic.trim(),
@@ -63,7 +74,7 @@ export class ProjectsService {
         tone: dto.tone,
         pillar: dto.pillar,
         status: ProjectStatus.IDEA_SELECTED,
-        seriesId: dto.seriesId ?? null,
+        seriesId,
         continuityMode: dto.continuityMode ?? "light",
       },
     });

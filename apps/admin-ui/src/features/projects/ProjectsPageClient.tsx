@@ -113,7 +113,7 @@ export function ProjectsPageClient() {
     setLoadingSeries(true);
     try {
       const s = await getSeries();
-      setAllSeries(s);
+      setAllSeries(s.filter(x => !x.disabled));
     } catch (e) {
       setAlert({
         variant: "danger",

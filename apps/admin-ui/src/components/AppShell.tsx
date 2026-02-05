@@ -10,9 +10,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div className="text-secondary small">bull-board</div>
           </div>
           <div className="list-group list-group-flush">
-            <Link className="list-group-item list-group-item-action" href="/projects">
-              Projects
-            </Link>
+            <div className="list-group list-group-flush">
+              <Link className="list-group-item list-group-item-action" href="/projects">
+                Projects
+              </Link>
+
+              <Link className="list-group-item list-group-item-action" href="/series">
+                Series
+              </Link>
+            </div>
+
           </div>
         </aside>
 

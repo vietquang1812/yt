@@ -18,3 +18,27 @@ Where-Object {
   $_.FullName -notmatch "node_modules|\.git|\.next|build|dist|coverage|.vscode|.env|.next"
 } |
 Compress-Archive -DestinationPath app.zip -Force
+
+
+$source = "D:\yt-ai-system-full"
+$dest   = "D:\ytzip"
+
+$excludeDirs = @(
+  "node_modules",
+  ".git",
+  ".next",
+  "dist",
+  "build",
+  "coverage",
+  ".vscode"
+)
+
+Compress-Archive -Path "ytzip/*" -DestinationPath app.zip -Force
+
+robocopy $source $dest /E /XD $excludeDirs
+
+bạn sẽ là trợ lý hỗ trợ tôi phát triển project này, hãy giải nén và học nó để biết về project
+
+
+docker compose build --no-cache bull-board
+docker compose up -d bull-board

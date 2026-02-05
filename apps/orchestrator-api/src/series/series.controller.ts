@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Post } from "@nestjs/common";
 import { SeriesService } from "./series.service";
 
 @Controller("series")
@@ -18,5 +18,10 @@ export class SeriesController {
   @Post()
   create(@Body() dto: { name: string; bible: any }) {
     return this.series.create(dto);
+  }
+
+  @Patch(":id")
+  update(@Param("id") id: string, @Body() dto: { name?: string; bible?: any; disabled?: boolean }) {
+    return this.series.update(id, dto);
   }
 }
