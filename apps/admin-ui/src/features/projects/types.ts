@@ -24,6 +24,7 @@ export type ArtifactDto = {
   type?: string;
   filename?: string;
   createdAt?: string;
+  meta?: any;
 };
 
 export type ArtifactListResponse = ArtifactDto[] | { items?: ArtifactDto[] };

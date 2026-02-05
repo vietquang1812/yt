@@ -6,7 +6,7 @@ import { topoSortSteps } from "./pipeline.sort";
 
 @Injectable()
 export class PipelineService {
-  constructor(private readonly queue: QueueService) {}
+  constructor(private readonly queue: QueueService) { }
 
   async run(projectId: string) {
     const project = await prisma.project.findUnique({ where: { id: projectId } });
@@ -46,4 +46,13 @@ export class PipelineService {
 
     return { ok: true, projectId, jobs };
   }
+
+  async segments(projectId: string) {
+    const project = await prisma.project.findUnique({ where: { id: projectId } });
+    if (!project) throw new NotFoundException("Project not found");
+
+    const job = await this.queue.enqueueStep({ projectId, step: "script_segments_generate" as any });
+    return { ok: true, projectId, jobs: [{ step: "script_segments_generate", jobId: job.id }] };
+  }
+
 }

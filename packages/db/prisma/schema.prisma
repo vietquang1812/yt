@@ -50,6 +50,7 @@ enum ArtifactType {
   METADATA_JSON
   SCRIPT_SEGMENTS_JSON
   NEXT_IDEAS_JSON
+  LLM_PROMPT_TEXT
 }
 
 enum JobStatus {

@@ -2,7 +2,7 @@
 
 import type { ArtifactDto, ProjectDto } from "../types";
 import { badgeStyle, latestByType } from "../lib/artifacts";
-
+import Link from "next/link";
 export function ProjectSummaryCard({
   project,
   projectId,
@@ -30,6 +30,11 @@ export function ProjectSummaryCard({
 
   return (
     <div className="card bg-dark text-white border-0" style={{ borderRadius: 16 }}>
+      <div className="card-header"> 
+        <Link className="btn btn-sm btn-outline-secondary ms-2" href={`/projects/${projectId}/chatgpt`}>
+        ChatGPT Prompts
+      </Link>
+      </div>
       <div className="card-body">
         <div className="d-flex justify-content-between align-items-start gap-2">
           <div>

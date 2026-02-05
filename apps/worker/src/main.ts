@@ -13,8 +13,8 @@ function boot(queueName: string, concurrency = 3) {
   return w;
 }
 
-boot("pipeline", 5);
-boot("llm", 3);
+boot("pipeline", 2);
+boot("llm", 2);
 boot("assets", 2);
 boot("media", 2);
 

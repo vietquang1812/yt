@@ -87,6 +87,9 @@ app.post("/admin/api/projects/:id/status", (req, res) =>
   proxy(req, res, `/projects/${req.params.id}/status`, { method: "POST", body: req.body })
 );
 
+app.post("/admin/api/projects/:id/segments", (req, res) =>
+  proxy(req, res, `/projects/${req.params.id}/segments`, { method: "POST" })
+);
 // --------------------
 // Admin UI pages
 // --------------------

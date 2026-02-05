@@ -9,6 +9,27 @@ import { handleScriptQA } from "./pipeline/steps/scriptQA";
 import { handleScriptRefine } from "./pipeline/steps/scriptRefine";
 import { handleScriptSegmentsGenerate } from "./pipeline/steps/scriptSegmentsGenerate";
 import { handleThumbnailGenerate } from "./pipeline/steps/thumbnailGenerate";
+import { Queue } from "bullmq";
+import { connection } from "../redis";
+const llmQueue = new Queue("llm", { connection });
+
+function makeJobId(projectId: string, step: string) {
+  return `${projectId}__${step}`.replace(/[^a-zA-Z0-9_-]/g, "_");
+}
+
+async function enqueueLLMStep(projectId: string, step: string) {
+  return llmQueue.add(
+    step,
+    { projectId, step },
+    {
+      jobId: makeJobId(projectId, step),
+      attempts: 3,
+      backoff: { type: "exponential", delay: 2000 },
+      removeOnComplete: 50,
+      removeOnFail: 50,
+    }
+  );
+}
 
 export async function handlePipelineJob(job: Job<any>) {
   const step = job.name as PipelineStep;
@@ -22,6 +43,7 @@ export async function handlePipelineJob(job: Job<any>) {
 
     if (step === "metadata_generate") {
       await handleMetadataGenerate(job, project);
+      await enqueueLLMStep(projectId, "script_qa");
       return;
     }
 

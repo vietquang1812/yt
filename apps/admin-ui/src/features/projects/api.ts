@@ -50,3 +50,8 @@ export function runPipeline(projectId: string) {
 export function refineAndReQA(projectId: string) {
   return apiFetch<string>(`/api/projects/${projectId}/refine`, { method: "POST" });
 }
+
+export function runScriptSegments(projectId: string) {
+  return apiFetch<string>(`/api/projects/${projectId}/segments`, { method: "POST" });
+}
+

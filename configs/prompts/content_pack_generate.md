@@ -184,9 +184,14 @@ The 3 ideas should form a clear progression:
 - Idea 2: deeper psychological or emotional layer
 - Idea 3: identity-level or philosophical reflection
 
-
 ---
 
+IMPORTANT:
+- You MUST ensure that `word_count` for each part matches the actual number of words in `content`.
+- Before returning JSON, recount the words for each part carefully.
+- If unsure, slightly under-report rather than over-report.
+- A deviation larger than 10% is NOT acceptable.
+---
 OUTPUT FORMAT:
 
 Return ONLY valid JSON following this exact schema:
@@ -229,7 +234,7 @@ Return ONLY valid JSON following this exact schema:
 }
 
 FINAL CHECK (before you output JSON):
-- total_word_count is between 3000 and 5000 (inclusive).
+- total_word_count is between 4000 and 6000 (inclusive).
 - parts length is between 4 and 6.
 - Each part.content is continuous narrative text (no headings, no bullets, no emojis).
 - Part 1 includes the channel greeting and a subscribe call-to-action AFTER the hook.

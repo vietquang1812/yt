@@ -27,6 +27,7 @@ export async function saveScriptAndMeta(projectId: string, pack: any, metaStep: 
       total_word_count: pack.total_word_count,
       parts: pack.parts.map((p: any) => ({
         part: p.part,
+        real_count: p.real_count,
         word_count: p.word_count,
         role: p.role,
       })),
@@ -40,6 +41,7 @@ export async function saveScriptAndMeta(projectId: string, pack: any, metaStep: 
     parts: pack.parts.map((p: any) => ({
       part: p.part,
       role: p.role,
+      real_count: p.real_count,
       word_count: p.word_count,
     })),
     compliance: pack.compliance || {},
