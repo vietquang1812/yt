@@ -2,7 +2,7 @@ import { Body, Controller, Get, Param, Post } from "@nestjs/common";
 import { ProjectsService } from "./projects.service";
 import { PipelineService } from "../pipeline/pipeline.service";
 import { Query } from "@nestjs/common";
-
+import { updateAllScriptJson } from "./prompts/updateAllScriptJson";
 type CreateProjectDto = {
   topic: string;
   language?: string;
@@ -90,6 +90,12 @@ export class ProjectsController {
   @Post(":id/prompts/ensure")
   ensurePrompt(@Param("id") id: string, @Query("step") step?: string) {
     return this.projects.ensurePrompt(id, step);
+  }
+
+  @Post(":id/all-script")
+  updateAllScript(@Param("id") id: string, @Body() body: any) {
+    // body kỳ vọng là object JSON (đã parse bởi Nest)
+    return updateAllScriptJson(id, body);
   }
 
 }

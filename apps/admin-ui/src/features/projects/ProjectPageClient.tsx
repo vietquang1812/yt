@@ -19,6 +19,7 @@ import { escapeHtml } from "./lib/html";
 import { errorMessage } from "./lib/errors";
 import type { StatusAlert } from "./lib/types";
 import { latestByType } from "./lib/artifacts";
+import { AllScriptJsonCard } from "./components/AllScriptJsonCard";
 
 function asTimeMs(d: any) {
   const t = d ? new Date(d).getTime() : 0;
@@ -330,6 +331,20 @@ export function ProjectPageClient({ projectId }: { projectId: string }) {
           <ScenesPromptsCard segments={segments} scenePlan={scenePlan} setStatusAlert={setStatusAlert} />
           <ArtifactsCard artifacts={artifacts} loading={loading} lastUpdated={lastUpdated} onViewArtifact={onViewArtifact} />
           <LiveStatusCard />
+        </div>
+      </div>
+      <div className="row mt-3">
+        <div className="col-12">
+          <div className="card">
+          <div className="card-header">
+            <h2 className="text-">Data</h2>
+          </div>
+          <div className="card-body">
+            <div className="mt-3">
+              <AllScriptJsonCard projectId={projectId} />
+            </div>
+          </div>
+        </div>
         </div>
       </div>
 

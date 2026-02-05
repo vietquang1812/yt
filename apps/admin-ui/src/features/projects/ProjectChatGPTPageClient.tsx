@@ -46,6 +46,7 @@ export function ProjectChatGPTPageClient({ projectId }: { projectId: string }) {
   const [loadingStatus, setLoadingStatus] = useState(true);
   const [loadingContent, setLoadingContent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   async function loadStatus() {
     setLoadingStatus(true);
@@ -59,6 +60,19 @@ export function ProjectChatGPTPageClient({ projectId }: { projectId: string }) {
       setError(e?.message || "Failed to load prompt status");
     } finally {
       setLoadingStatus(false);
+    }
+  }
+  async function handleCopy() {
+    if (!content) return;
+
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopied(true);
+
+      // reset flag sau 1.5s
+      setTimeout(() => setCopied(false), 1500);
+    } catch (e) {
+      setError("Failed to copy to clipboard");
     }
   }
 
@@ -218,11 +232,11 @@ export function ProjectChatGPTPageClient({ projectId }: { projectId: string }) {
         <div className="card-header d-flex align-items-center justify-content-between">
           <div className="fw-bold">Prompt content</div>
           <button
-            className="btn btn-sm btn-outline-secondary"
-            onClick={() => navigator.clipboard.writeText(content || "")}
+            className={`btn btn-sm ${copied ? "btn-success" : "btn-outline-secondary"}`}
+            onClick={handleCopy}
             disabled={!content}
           >
-            Copy
+            {copied ? "✓ Copied" : "Copy"}
           </button>
         </div>
 
