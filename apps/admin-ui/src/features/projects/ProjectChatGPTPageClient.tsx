@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
-type PromptStep = "metadata_generate" | "script_qa";
+type PromptStep = "metadata_generate" | "script_qa" | "script_refine";
 
 type PromptStatus = {
   step: PromptStep;
@@ -109,40 +109,41 @@ export function ProjectChatGPTPageClient({ projectId }: { projectId: string }) {
     }
   }
 
-useEffect(() => {
-  (async () => {
-    try {
-      setLoadingStatus(true);
-      setError(null);
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoadingStatus(true);
+        setError(null);
 
-      // 1) PREVIEW / ENSURE metadata_generate prompt exists
-      // (server sẽ tạo file metadata_generate.txt nếu chưa có)
-      await fetch(`/api/projects/${projectId}/prompts/ensure?step=metadata_generate`, {
-        method: "POST",
-        cache: "no-store",
-      });
+        // 1) PREVIEW / ENSURE metadata_generate prompt exists
+        // (server sẽ tạo file metadata_generate.txt nếu chưa có)
+        await fetch(`/api/projects/${projectId}/prompts/ensure?step=metadata_generate`, {
+          method: "POST",
+          cache: "no-store",
+        });
 
-      // 2) refresh status
-      await loadStatus();
+        // 2) refresh status
+        await loadStatus();
 
-      // 3) auto-show metadata prompt right away
-      await showPrompt("metadata_generate");
-    } catch (e: any) {
-      setError(e?.message || "Failed to preview metadata_generate");
-    } finally {
-      setLoadingStatus(false);
-    }
-  })();
+        // 3) auto-show metadata prompt right away
+        await showPrompt("metadata_generate");
+      } catch (e: any) {
+        setError(e?.message || "Failed to preview metadata_generate");
+      } finally {
+        setLoadingStatus(false);
+      }
+    })();
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [projectId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId]);
 
 
   const parsed = useMemo(() => parsePrompt(content), [content]);
 
   const meta = status?.metadata_generate;
   const qa = status?.script_qa;
-
+  const refine = status?.script_refine;
+  const refineDisabled = loadingStatus || !(refine?.enabled);
   const metaDisabled = loadingStatus || !(meta?.enabled);
   const qaDisabled = loadingStatus || !(qa?.enabled);
 
@@ -188,6 +189,23 @@ useEffect(() => {
           2) script_qa
           {loadingStatus ? "" : qa?.exists ? " ✅" : qa?.enabled ? " ⏳" : " 🔒"}
         </button>
+
+        <button
+          className={`btn btn-sm ${activeStep === "script_refine" ? "btn-primary" : "btn-outline-primary"}`}
+          disabled={refineDisabled}
+          onClick={() => {
+            if (refine?.exists) showPrompt("script_refine");
+            else fetchJSON(`/api/projects/${projectId}/prompts/ensure?step=script_refine`, { method: "POST" })
+              .then(loadStatus)
+              .then(() => showPrompt("script_refine"))
+              .catch((e: any) => setError(e?.message || "Failed to ensure script_refine"));
+          }}
+          title={refine?.reason || ""}
+        >
+          3) script_refine
+          {loadingStatus ? "" : refine?.exists ? " ✅" : refine?.enabled ? " ⏳" : " 🔒"}
+        </button>
+
       </div>
 
       {qa?.enabled === false && qa?.reason ? (

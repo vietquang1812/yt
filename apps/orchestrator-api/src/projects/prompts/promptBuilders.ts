@@ -6,6 +6,8 @@ import { renderTemplate } from "../utils/template";
 import { toChatGPTFormat } from "../utils/promptFormat";
 import { projectRootDir, resolveConfigDir } from "../utils/paths";
 import { readIfExists } from "../utils/fs";
+import { loadConfigText } from "./promptLoader";
+import { loadSeriesContext } from "./seriesContext";
 
 export async function buildMetadataGeneratePrompt(projectId: string) {
   const cfgDir = resolveConfigDir();
@@ -72,5 +74,43 @@ export async function buildScriptQAPrompt(projectId: string) {
   });
 
   const system = `You are a strict QA reviewer for YouTube scripts. Follow the rubric. Return exactly what the prompt requests.`;
+  return { ok: true as const, prompt: toChatGPTFormat(system, user) };
+}
+
+export async function buildScriptRefinePrompt(projectId: string) {
+  const cfgDir = resolveConfigDir();
+  const root = projectRootDir(projectId);
+
+  const [scriptText, qaReportText] = await Promise.all([
+    readIfExists(path.join(root, "script_final.md")),
+    readIfExists(path.join(root, "qa_report.json")),
+  ]);
+
+  const missing: string[] = [];
+  if (!scriptText) missing.push("script_final.md");
+  if (!qaReportText) missing.push("qa_report.json");
+  if (missing.length > 0) return { ok: false as const, missing };
+
+  const tmpl = await fs.readFile(path.join(cfgDir, "prompts", "script_refine.md"), "utf8");
+  const project = await prisma.project.findUnique({ where: { id: projectId } });
+  if (!project) throw new Error(`Project not found: ${projectId}`);
+
+  const personaYaml = await loadConfigText("persona.yaml");
+  const styleRulesYaml = await loadConfigText("style_rules.yaml");
+  const ctx = await loadSeriesContext(projectId);
+
+  const user = renderTemplate(tmpl, {
+    topic: project.topic,
+    angle: project.pillar,
+    script_text: scriptText,
+    qa_report_json: qaReportText,
+    persona_yaml: personaYaml,
+    style_rules_yaml: styleRulesYaml,
+    series_bible_json: JSON.stringify(ctx.seriesBible ?? {}, null, 2),
+    series_memory_json: JSON.stringify(ctx.seriesMemory ?? {}, null, 2),
+    continuity_mode: ctx.continuityMode,
+  });
+
+  const system = `You are a precise script editor. Apply the QA report. Improve clarity and structure. Return exactly what the prompt requests.`;
   return { ok: true as const, prompt: toChatGPTFormat(system, user) };
 }
