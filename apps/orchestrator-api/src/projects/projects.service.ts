@@ -18,6 +18,7 @@ const textTypes = new Set([
   "METADATA_JSON",
   "QA_REPORT_JSON",
   "SCRIPT_SEGMENTS_JSON",
+  "NEXT_IDEAS_JSON",
 ]);
 
 
@@ -90,7 +91,6 @@ export class ProjectsService {
 
     const buf = await fs.readFile(artifact.uri);
 
-    const textTypes = new Set(["SCRIPT_FINAL_MD", "SCENE_PLAN_JSON", "METADATA_JSON", "QA_REPORT_JSON"]);
     if (textTypes.has(artifact.type)) {
       return { id: artifact.id, type: artifact.type, content: buf.toString("utf8") };
     }

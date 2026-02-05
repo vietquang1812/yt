@@ -58,6 +58,37 @@ function countWords(text: string) {
   return cleaned.split(/\s+/).length;
 }
 
+function validateNextIdeas(ideas: any, continuityMode: string) {
+  if (!Array.isArray(ideas) || ideas.length !== 3) {
+    throw new Error("next_ideas must be an array of exactly 3 items");
+  }
+
+  for (const [idx, i] of ideas.entries()) {
+    if (!i || typeof i !== "object") throw new Error(`next_ideas[${idx}] invalid object`);
+
+    if (typeof i.topic !== "string" || !i.topic.trim()) throw new Error(`next_ideas[${idx}].topic required`);
+    if (typeof i.pillar !== "string" || !i.pillar.trim()) throw new Error(`next_ideas[${idx}].pillar required`);
+    if (typeof i.tone !== "string" || !i.tone.trim()) throw new Error(`next_ideas[${idx}].tone required`);
+
+    if (!i.series || typeof i.series !== "object") throw new Error(`next_ideas[${idx}].series required`);
+    if (!["existing", "new"].includes(i.series.mode)) throw new Error(`next_ideas[${idx}].series.mode invalid`);
+    if (typeof i.series.name !== "string" || !i.series.name.trim()) throw new Error(`next_ideas[${idx}].series.name required`);
+
+    if (!["none", "light", "occasionally_strong"].includes(i.continuity)) {
+      throw new Error(`next_ideas[${idx}].continuity invalid`);
+    }
+
+    // nếu project continuityMode đang "occasionally_strong", cấm idea "none" (giữ mạch chặt)
+    if (continuityMode === "occasionally_strong" && i.continuity === "none") {
+      throw new Error(`next_ideas[${idx}].continuity too weak for continuityMode=occasionally_strong`);
+    }
+
+    if (typeof i.duration_minutes !== "number" || i.duration_minutes < 5 || i.duration_minutes > 8) {
+      throw new Error(`next_ideas[${idx}].duration_minutes invalid (5..8)`);
+    }
+  }
+}
+
 // --- MVP repetition check (adjacent parts) ---
 function normalizeForCompare(s: string) {
   return (s || "")
@@ -229,6 +260,7 @@ export async function handlePipelineJob(job: Job<any>) {
 
     await setProgress(job, 55, "validating content constraints");
     pack = validateScriptPack(pack);
+    validateNextIdeas(pack.next_ideas, project.continuityMode || "light");
 
     await setProgress(job, 75, "saving artifacts");
     await saveScriptAndMeta(projectId, pack, "metadata_generate");
@@ -242,7 +274,15 @@ export async function handlePipelineJob(job: Job<any>) {
       content: Buffer.from(JSON.stringify(scenes, null, 2), "utf8"),
       meta: { step: "metadata_generate" }
     });
-
+    
+    await setProgress(job, 85, "done");
+    await saveArtifact({
+      projectId,
+      type: ArtifactType.NEXT_IDEAS_JSON,
+      filename: "next_ideas.json",
+      content: Buffer.from(JSON.stringify(pack.next_ideas, null, 2), "utf8"),
+      meta: { step: "metadata_generate" }
+    });
     await setProgress(job, 100, "done");
     return;
   }
