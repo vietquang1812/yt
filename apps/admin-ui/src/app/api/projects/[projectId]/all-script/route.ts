@@ -7,10 +7,12 @@ export async function GET(req: NextRequest, props: { params: Promise<{ projectId
     return proxyToOrchestrator(`/projects/${projectId}/all-script`);
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { projectId: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ projectId: string }> }) {
+
+    const {projectId }=  await props.params;
     const bodyText = await req.text();
-    return proxyToOrchestrator(`/projects/${params.projectId}/all-script`, {
-        method: "PUT",
+    return proxyToOrchestrator(`/projects/${projectId}/all-script`, {
+        method: "POST",
         bodyText,
         contentType: "application/json",
     });

@@ -1,7 +1,6 @@
 import { ArtifactType, prisma } from "@yt-ai/db";
-import { projectRootDir, safeProjectId } from "../utils/paths";
+import {safeProjectId } from "../utils/paths";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
-import { ensureDir } from "../utils/fs";
 import { validateScriptPack } from "../validators/scriptPack";
 import { saveScriptAndMeta } from "../functions/artifacts";
 import { saveArtifact } from "../lib/artifacts";
@@ -16,15 +15,11 @@ export async function updateAllScriptJson(projectId: string, data: any) {
     if (data === null || data === undefined) {
         throw new BadRequestException("Body must be a JSON object/array");
     }
+    if (typeof data !== "object") {
+    throw new BadRequestException("Body must be JSON (object/array), not a primitive");
+  }
 
-    let pack: any;
-    try {
-        pack = JSON.parse(data);
-    } catch {
-        throw new BadRequestException("data: return valid JSON");
-    }
-
-    pack = validateScriptPack(pack);
+    let pack = validateScriptPack(data);
 
     await saveScriptAndMeta(projectId, pack, "metadata_generate");
 
