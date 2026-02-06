@@ -21,15 +21,15 @@ export async function updateAllScriptJson(projectId: string, data: any) {
 
     let pack = validateScriptPack(data);
 
-    await saveScriptAndMeta(projectId, pack, "metadata_generate");
-
+    // await saveScriptAndMeta(projectId, pack, "prompt_generate_prompt_content");
+    
     if (pack.next_ideas && pack.next_ideas.length > 0) {
         await saveArtifact({
             projectId,
             type: ArtifactType.NEXT_IDEAS_JSON,
             filename: "next_ideas.json",
             content: Buffer.from(JSON.stringify(pack.next_ideas, null, 2), "utf8"),
-            meta: { step: "metadata_generate" },
+            meta: { step: "prompt_generate_prompt_content" },
         });
     }
 

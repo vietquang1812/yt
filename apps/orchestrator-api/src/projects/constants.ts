@@ -10,7 +10,7 @@ export const TEXT_ARTIFACT_TYPES = new Set([
 ]);
 
 export const ALLOWED_PREVIEW_STEPS = new Set([
-  "metadata_generate",
+  "prompt_generate_prompt_content",
   "script_qa",
   "script_refine",
   "script_segments_generate",

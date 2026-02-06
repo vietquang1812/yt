@@ -23,7 +23,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </aside>
 
-        <main className="col p-3">
+        <main className="col p-3 col-md-9 col-lg-10">
           {children}
         </main>
       </div>

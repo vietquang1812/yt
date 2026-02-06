@@ -6,12 +6,12 @@ export type PipelineStep =
   | "script_generate" | "script_refine" | "script_qa"
   | "tts_render" | "scene_plan"
   | "asset_fetch" | "video_render" | "shorts_render"
-  | "metadata_generate" | "thumbnail_generate"| "script_segments_generate";
+  | "prompt_generate_prompt_content" | "thumbnail_generate"| "script_segments_generate";
 
 export type PipelineJobPayload = { projectId: string; step: PipelineStep; meta?: any };
 
 function queueForStep(step: PipelineStep): "pipeline" | "llm" | "assets" | "media" {
-  if (["script_generate", "script_refine", "script_qa", "metadata_generate", "thumbnail_generate",  "script_segments_generate"].includes(step)) return "llm";
+  if (["script_generate", "script_refine", "script_qa", "prompt_generate_prompt_content", "thumbnail_generate",  "script_segments_generate"].includes(step)) return "llm";
   if (step === "asset_fetch") return "assets";
   if (["video_render", "shorts_render", "tts_render"].includes(step)) return "media";
   return "pipeline";

@@ -1,5 +1,5 @@
 export type PipelineStep =
-  | "metadata_generate"
+  | "prompt_generate_prompt_content"
   | "script_refine"
   | "script_qa"
   | "thumbnail_generate"

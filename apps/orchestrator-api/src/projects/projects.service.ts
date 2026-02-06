@@ -12,6 +12,8 @@ import { renderTemplate } from "./utils/template";
 import { toChatGPTFormat } from "./utils/promptFormat";
 import { loadPrompt, loadConfigText } from "./prompts/promptLoader";
 import * as promptManager from "./prompts/promptManager";
+import { validatePromptPack } from './validators/promptPack.validator';
+
 @Injectable()
 export class ProjectsService {
   async list() {
@@ -94,8 +96,8 @@ export class ProjectsService {
     const ctx = await loadSeriesContext(projectId);
     let promptText = "";
 
-    if (step === "metadata_generate") {
-      const tmpl = await loadPrompt("content_pack_generate");
+    if (step === "prompt_generate_prompt_content") {
+      const tmpl = await loadPrompt("prompt_generate_prompt_content");
       const personaYaml = await loadConfigText("persona.yaml");
       const styleRulesYaml = await loadConfigText("style_rules.yaml");
 
@@ -148,4 +150,59 @@ export class ProjectsService {
   async ensurePrompt(projectId: string, step?: string) {
     return promptManager.ensurePrompt(projectId, step);
   }
+
+  async updatePromptPack(projectId: string, promptPack: any) {
+    validatePromptPack(promptPack);
+
+    const project = await prisma.project.update({
+      where: { id: projectId },
+      data: {
+        prompt_pack_json: promptPack,
+        prompt_pack_version: { increment: 1 },
+        prompt_pack_updated_at: new Date(),
+      },
+    });
+
+    return {
+      success: true,
+      version: project.prompt_pack_version,
+    };
+  }
+
+  async updatePromptPackPartContent(
+    projectId: string,
+    part: number,
+    content: string
+  ) {
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+    });
+
+    if (!project?.prompt_pack_json) {
+      throw new BadRequestException('Prompt pack not found');
+    }
+
+    const pack = project.prompt_pack_json as any;
+
+    const target = pack.parts.find((p: any) => p.part === part);
+    if (!target) {
+      throw new BadRequestException(`Part ${part} not found`);
+    }
+
+    target.content = content;
+    target.word_count = content.split(/\s+/).length;
+
+    await prisma.project.update({
+      where: { id: projectId },
+      data: {
+        prompt_pack_json: pack,
+        prompt_pack_updated_at: new Date(),
+      },
+    });
+
+    return { ok: true };
+  }
 }
+
+
+

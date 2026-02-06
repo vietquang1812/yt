@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
@@ -12,11 +12,12 @@ enum ProjectStatus {
   IDEA_SELECTED
 
   // content pack / script
-  METADATA_READY          // metadata_generate done (script_final + metadata.json + scene_plan + next_ideas)
-  SCRIPT_QA_PASSED        // script_qa approved
-  SCRIPT_SEGMENTS_READY   // script_segments_generate done
-  SCRIPT_REFINED          // script_refine done
-  SCRIPT_FINALIZED        // (optional) when you lock final script for production
+  PROMPT_CONTENT_READY
+  METADATA_READY // prompt_generate_prompt_content done (script_final + metadata.json + scene_plan + next_ideas)
+  SCRIPT_QA_PASSED // script_qa approved
+  SCRIPT_SEGMENTS_READY // script_segments_generate done
+  SCRIPT_REFINED // script_refine done
+  SCRIPT_FINALIZED // (optional) when you lock final script for production
 
   // production media
   VOICE_RENDERED
@@ -33,7 +34,6 @@ enum ProjectStatus {
 
   FAILED
 }
-
 
 enum ArtifactType {
   SCRIPT_DRAFT_JSON
@@ -61,23 +61,23 @@ enum JobStatus {
 }
 
 model Series {
-  id        String   @id @default(uuid())
-  name      String
+  id       String  @id @default(uuid())
+  name     String
   // "Series Bible" lưu dạng JSON: theme, tone, motifs, dos/donts, CTA style...
-  bible     Json
-  disabled  Boolean  @default(false) 
-  
+  bible    Json
+  disabled Boolean @default(false)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  projects  Project[]
-  memory    SeriesMemory?
+  projects Project[]
+  memory   SeriesMemory?
 }
 
 model SeriesMemory {
-  id        String   @id @default(uuid())
-  seriesId  String   @unique
-  series    Series   @relation(fields: [seriesId], references: [id], onDelete: Cascade)
+  id       String @id @default(uuid())
+  seriesId String @unique
+  series   Series @relation(fields: [seriesId], references: [id], onDelete: Cascade)
 
   // tóm tắt + open loops + callbacks + motifs đang dùng
   memory    Json
@@ -85,37 +85,41 @@ model SeriesMemory {
 }
 
 model Project {
-  id              String   @id @default(uuid())
+  id              String  @id @default(uuid())
   topic           String
-  language        String   @default("en")
-  durationMinutes Int      @default(6)
-  format          String   @default("youtube_long")
+  language        String  @default("en")
+  durationMinutes Int     @default(6)
+  format          String  @default("youtube_long")
   tone            String?
   pillar          String?
 
   // NEW: link to Series
-  seriesId        String?
-  series          Series?  @relation(fields: [seriesId], references: [id], onDelete: SetNull)
+  seriesId String?
+  series   Series? @relation(fields: [seriesId], references: [id], onDelete: SetNull)
 
   // NEW: continuity control
   // "none" | "light" | "occasionally_strong"
-  continuityMode  String   @default("light")
+  continuityMode String @default("light")
 
-  status          ProjectStatus @default(IDEA_SELECTED)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  status    ProjectStatus @default(IDEA_SELECTED)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 
-  artifacts       Artifact[]
-  jobs            Job[]
-  analytics       Analytics[]
+  artifacts              Artifact[]
+  jobs                   Job[]
+  analytics              Analytics[]
+  
+  prompt_pack_json       Json?
+  prompt_pack_version    Int         @default(1)
+  prompt_pack_updated_at DateTime?
 
   @@index([seriesId])
 }
 
 model Artifact {
-  id        String       @id @default(uuid())
+  id        String  @id @default(uuid())
   projectId String
-  project   Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   type      ArtifactType
   filename  String
@@ -153,7 +157,7 @@ model Analytics {
   subsGained7d    Int?
   capturedAt      DateTime @default(now())
 
-  createdAt       DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([projectId, capturedAt])
 }

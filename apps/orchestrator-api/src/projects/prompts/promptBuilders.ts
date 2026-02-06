@@ -27,7 +27,7 @@ export async function buildMetadataGeneratePrompt(projectId: string) {
 
   const personaYaml = await fs.readFile(path.join(cfgDir, "persona.yaml"), "utf8");
   const styleRulesYaml = await fs.readFile(path.join(cfgDir, "style_rules.yaml"), "utf8");
-  const tmpl = await fs.readFile(path.join(cfgDir, "prompts", "content_pack_generate.md"), "utf8");
+  const tmpl = await fs.readFile(path.join(cfgDir, "prompts", "prompt_generate_prompt_content.md"), "utf8");
 
   const user = renderTemplate(tmpl, {
     topic: project.topic || "Untitled topic",

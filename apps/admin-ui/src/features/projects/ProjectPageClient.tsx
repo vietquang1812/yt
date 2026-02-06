@@ -59,11 +59,11 @@ export function ProjectPageClient({ projectId }: { projectId: string }) {
     return base ? `${base.replace(/\/$/, "")}/queues` : "/queues";
   }, []);
 
-  // ✅ “metadata_generate đã xong” ~ có script final hoặc metadata json
+  // ✅ prompt_generate_prompt_content đã xong” ~ có script final hoặc metadata json
   const hasMetadata =
     !!latestByType(artifacts, "SCRIPT_FINAL_MD") || !!latestByType(artifacts, "METADATA_JSON");
 
-  // ✅ Refine & Segments chỉ hiện sau metadata_generate
+  // ✅ Refine & Segments chỉ hiện sau prompt_generate_prompt_content
   const showRefine = hasMetadata;
   const showSegments = hasMetadata;
 
@@ -132,7 +132,7 @@ export function ProjectPageClient({ projectId }: { projectId: string }) {
       await runPipeline(projectId);
       await refreshAll();
 
-      // ✅ vẫn poll QA vì QA chạy tự động sau metadata_generate
+      // ✅ vẫn poll QA vì QA chạy tự động sau prompt_generate_prompt_content
       startPolling({
         startedAtISO: pendingActionRef.current.startedAtISO,
         onApproved: () => {
@@ -293,7 +293,7 @@ export function ProjectPageClient({ projectId }: { projectId: string }) {
         showRefine={showRefine}
       />
 
-      {/* ✅ Manual Segments button (hiện sau metadata_generate) */}
+      {/* ✅ Manual Segments button (hiện sau prompt_generate_prompt_content) */}
       <div className="d-flex gap-2 align-items-center mb-3">
         <button
           className={`btn btn-outline-info ${showSegments ? "" : "d-none"}`}

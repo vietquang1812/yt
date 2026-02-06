@@ -1,2 +1,2 @@
 pipeline:
-  - name: metadata_generate
+  - name: prompt_generate_prompt_content

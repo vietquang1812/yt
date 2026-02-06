@@ -6,7 +6,7 @@ export async function POST(
     props: { params: Promise<{ projectId: string }> }
 ) {
     const { projectId } = await props.params;
-    const step = req.nextUrl.searchParams.get("step") ?? "metadata_generate";
+    const step = req.nextUrl.searchParams.get("step") ?? "prompt_generate_prompt_content";
 
     return proxyToOrchestrator(
         `/projects/${projectId}/prompts/preview?step=${encodeURIComponent(step)}`,

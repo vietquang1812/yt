@@ -74,28 +74,28 @@ services:
       timeout: 3s
       retries: 20
 
-  worker:
-    build:
-      context: .
-      dockerfile: apps/worker/Dockerfile
-    container_name: yt_worker
-    environment:
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
-      OPENAI_MODEL_TEXT: ${OPENAI_MODEL_TEXT}
-      NODE_ENV: production
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/yt_ai?schema=public
-      REDIS_HOST: redis
-      REDIS_PORT: "6379"
-      STORAGE_DRIVER: local
-      STORAGE_DIR: /app/storage/projects
-    volumes:
-      - ./storage:/app/storage
-      - ./configs:/app/configs
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+  # worker:
+  #   build:
+  #     context: .
+  #     dockerfile: apps/worker/Dockerfile
+  #   container_name: yt_worker
+  #   environment:
+  #     OPENAI_API_KEY: ${OPENAI_API_KEY}
+  #     OPENAI_MODEL_TEXT: ${OPENAI_MODEL_TEXT}
+  #     NODE_ENV: production
+  #     DATABASE_URL: postgresql://postgres:postgres@postgres:5432/yt_ai?schema=public
+  #     REDIS_HOST: redis
+  #     REDIS_PORT: "6379"
+  #     STORAGE_DRIVER: local
+  #     STORAGE_DIR: /app/storage/projects
+  #   volumes:
+  #     - ./storage:/app/storage
+  #     - ./configs:/app/configs
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
 
   bull-board:
     build:

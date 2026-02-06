@@ -19,7 +19,7 @@ export async function handleScriptQA(job: Job, project: Project) {
 
   const scriptArtifact = await getLatestArtifact(projectId, ArtifactType.SCRIPT_FINAL_MD);
   if (!scriptArtifact?.uri) {
-    throw new Error("script_qa: missing SCRIPT_FINAL_MD artifact. Run metadata_generate first.");
+    throw new Error("script_qa: missing SCRIPT_FINAL_MD artifact. Run prompt_generate_prompt_content first.");
   }
 
   const scriptText = await fs.readFile(scriptArtifact.uri, "utf8");

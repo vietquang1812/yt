@@ -37,7 +37,7 @@ export async function handleMetadataGenerate(job: Job, project: Project) {
 
     await setProgress(job, 10, "loading prompt + configs");
 
-    const tmpl = await loadPrompt("content_pack_generate");
+    const tmpl = await loadPrompt("prompt_generate_prompt_content");
     const personaYaml = await loadConfigText("persona.yaml");
     const styleRulesYaml = await loadConfigText("style_rules.yaml");
     const ctx = await loadSeriesContext(projectId);
@@ -55,7 +55,7 @@ export async function handleMetadataGenerate(job: Job, project: Project) {
     });
 
     await setProgress(job, 40, "calling llm");
-    await savePromptArtifact(projectId, "metadata_generate", prompt);
+    await savePromptArtifact(projectId, "prompt_generate_prompt_content", prompt);
     await setProgress(job, 100, "done");
     return;
 
@@ -65,7 +65,7 @@ export async function handleMetadataGenerate(job: Job, project: Project) {
     try {
         pack = JSON.parse(resp.text);
     } catch {
-        throw new Error("metadata_generate: model did not return valid JSON");
+        throw new Error("prompt_generate_prompt_content: model did not return valid JSON");
     }
 
     await setProgress(job, 55, "validating content constraints");
@@ -73,7 +73,7 @@ export async function handleMetadataGenerate(job: Job, project: Project) {
     //   validateNextIdeas(pack.next_ideas, project.continuityMode || "light");
 
     await setProgress(job, 75, "saving artifacts");
-    await saveScriptAndMeta(projectId, pack, "metadata_generate");
+    await saveScriptAndMeta(projectId, pack, "prompt_generate_prompt_content");
 
     const scenes = Array.isArray(pack.scenes) ? pack.scenes : [];
     await saveArtifact({
@@ -81,7 +81,7 @@ export async function handleMetadataGenerate(job: Job, project: Project) {
         type: ArtifactType.SCENE_PLAN_JSON,
         filename: "scene_plan.json",
         content: Buffer.from(JSON.stringify(scenes, null, 2), "utf8"),
-        meta: { step: "metadata_generate" },
+        meta: { step: "prompt_generate_prompt_content" },
     });
 
     await saveArtifact({
@@ -89,7 +89,7 @@ export async function handleMetadataGenerate(job: Job, project: Project) {
         type: ArtifactType.NEXT_IDEAS_JSON,
         filename: "next_ideas.json",
         content: Buffer.from(JSON.stringify(pack.next_ideas, null, 2), "utf8"),
-        meta: { step: "metadata_generate" },
+        meta: { step: "prompt_generate_prompt_content" },
     });
 
     await setProjectStatus(projectId, ProjectStatus.METADATA_READY);

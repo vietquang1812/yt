@@ -1,58 +1,102 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
-type PromptStep = "metadata_generate" | "script_qa" | "script_refine";
+/* =======================
+   Types
+======================= */
+
+type PromptStep =
+  | "prompt_generate_prompt_content"
+  | "regenerate_prompt_pack"
+  | "script_qa"
+  | "script_refine";
 
 type PromptStatus = {
   step: PromptStep;
-  exists: boolean;          // prompt file exists?
-  enabled: boolean;         // button enabled?
-  reason?: string | null;   // why disabled
+  exists: boolean;
+  enabled: boolean;
+  reason?: string | null;
 };
+
+type StatusResponse = {
+  ok: true;
+  status: Record<PromptStep, PromptStatus>;
+};
+
+type PromptPackPart = {
+  part: number;
+  role?: string;
+  generation_prompt: string;
+  content?: string;
+  word_count?: number;
+};
+
+/* =======================
+   Helpers
+======================= */
 
 async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
   const r = await fetch(url, { cache: "no-store", ...init });
   const text = await r.text();
+
   let data: any = null;
-  try { data = text ? JSON.parse(text) : null; } catch { /* ignore */ }
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch { }
 
   if (!r.ok) {
     const msg = data?.error || data?.message || `Request failed: ${r.status}`;
     throw new Error(msg);
   }
+
   return data as T;
 }
 
-function parsePrompt(text: string) {
-  const raw = text || "";
-  const systemMatch = raw.match(/(?:^|\n)\s*system\s*\n([\s\S]*?)(?:\n\s*user\s*\n)/i);
-  const userMatch = raw.match(/(?:^|\n)\s*user\s*\n([\s\S]*)$/i);
+/* =======================
+   Component
+======================= */
 
-  return {
-    system: (systemMatch?.[1] ?? "").trim(),
-    user: (userMatch?.[1] ?? "").trim(),
-    raw,
-  };
-}
+export function ProjectChatGPTPageClient({
+  projectId,
+}: {
+  projectId: string;
+}) {
+  const [status, setStatus] =
+    useState<Record<PromptStep, PromptStatus> | null>(null);
 
-export function ProjectChatGPTPageClient({ projectId }: { projectId: string }) {
-  const [status, setStatus] = useState<Record<PromptStep, PromptStatus> | null>(null);
+  const [activeStep, setActiveStep] =
+    useState<PromptStep>("prompt_generate_prompt_content");
 
-  const [activeStep, setActiveStep] = useState<PromptStep>("metadata_generate");
-  const [content, setContent] = useState<string>("");
+  const [mainTab, setMainTab] =
+    useState<"prompt_pack" | "regenerate_prompt_pack">("prompt_pack");
+
+  const [content, setContent] = useState<string>(""); // qa / refine
+  const [jsonText, setJsonText] = useState<string>(""); // prompt pack json
+  const [promptSource, setPromptSource] = useState<string>(""); // source prompt
+  const [copiedPrompt, setCopiedPrompt] = useState(false);
+
+  // regenerate tab state
+  const [parts, setParts] = useState<PromptPackPart[]>([]);
+  const [activePart, setActivePart] = useState<number | null>(null);
+  const [partContent, setPartContent] = useState("");
+  const [copiedPartPrompt, setCopiedPartPrompt] = useState(false);
 
   const [loadingStatus, setLoadingStatus] = useState(true);
   const [loadingContent, setLoadingContent] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+
+  /* =======================
+     Load status
+  ======================= */
 
   async function loadStatus() {
     setLoadingStatus(true);
     setError(null);
+
     try {
-      const res = await fetchJSON<{ ok: true; status: Record<PromptStep, PromptStatus> }>(
+      const res = await fetchJSON<StatusResponse>(
         `/api/projects/${projectId}/prompts/status`
       );
       setStatus(res.status);
@@ -62,216 +106,268 @@ export function ProjectChatGPTPageClient({ projectId }: { projectId: string }) {
       setLoadingStatus(false);
     }
   }
-  async function handleCopy() {
-    if (!content) return;
 
-    try {
-      await navigator.clipboard.writeText(content);
-      setCopied(true);
-
-      // reset flag sau 1.5s
-      setTimeout(() => setCopied(false), 1500);
-    } catch (e) {
-      setError("Failed to copy to clipboard");
-    }
-  }
+  /* =======================
+     Load prompt pack + source
+  ======================= */
 
   async function showPrompt(step: PromptStep) {
     setActiveStep(step);
+    setMainTab("prompt_pack");
     setLoadingContent(true);
     setError(null);
+
     try {
-      const res = await fetchJSON<{ ok: true; content: string }>(
-        `/api/projects/${projectId}/prompts/content?step=${encodeURIComponent(step)}`
-      );
-      setContent(res.content || "");
-    } catch (e: any) {
-      setError(e?.message || "Failed to load prompt content");
-      setContent("");
-    } finally {
-      setLoadingContent(false);
-    }
-  }
+      if (step === "prompt_generate_prompt_content") {
+        const project = await fetchJSON<{
+          ok: true;
+          prompt_pack_json?: { parts?: PromptPackPart[] };
+        }>(`/api/projects/${projectId}`);
 
-  async function ensureAndShowScriptQA() {
-    // 1) ensure (server checks prerequisites + create file if missing)
-    setError(null);
-    setLoadingContent(true);
-    try {
-      const ensured = await fetchJSON<{
-        ok: boolean;
-        enabled: boolean;
-        reason?: string | null;
-        created?: boolean;
-      }>(`/api/projects/${projectId}/prompts/ensure?step=script_qa`, { method: "POST" });
+        setJsonText(
+          JSON.stringify(project.prompt_pack_json ?? {}, null, 2)
+        );
 
-      // refresh status UI
-      await loadStatus();
+        setParts(project.prompt_pack_json?.parts ?? []);
+        setActivePart(project.prompt_pack_json?.parts?.[0]?.part ?? null);
 
-      if (!ensured.enabled) {
-        // keep current content, just show reason
-        setError(ensured.reason || "script_qa is not available yet");
+        const promptRes = await fetchJSON<{ ok: true; content: string }>(
+          `/api/projects/${projectId}/prompts/content?step=prompt_generate_prompt_content`
+        );
+        setPromptSource(promptRes.content || "");
+        setContent("");
         return;
       }
 
-      // 2) show content
-      await showPrompt("script_qa");
+      const res = await fetchJSON<{ ok: true; content: string }>(
+        `/api/projects/${projectId}/prompts/content?step=${encodeURIComponent(
+          step
+        )}`
+      );
+
+      setContent(res.content || "");
+      setJsonText("");
+      setPromptSource("");
     } catch (e: any) {
-      setError(e?.message || "Failed to ensure script_qa prompt");
+      setError(e?.message || "Failed to load content");
     } finally {
       setLoadingContent(false);
     }
   }
+
+  /* =======================
+     Save prompt pack
+  ======================= */
+
+  async function savePromptPack() {
+    try {
+      const parsed = JSON.parse(jsonText);
+      await fetchJSON(`/api/projects/${projectId}/prompt-pack`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt_pack_json: parsed }),
+      });
+      alert("Prompt pack updated");
+    } catch (e: any) {
+      setError(e?.message || "Invalid JSON");
+    }
+  }
+
+  async function copyPrompt(text: string, setter: any) {
+    await navigator.clipboard.writeText(text);
+    setter(true);
+    setTimeout(() => setter(false), 1200);
+  }
+
+  /* =======================
+     Regenerate tab helpers
+  ======================= */
+
+  const currentPart = parts.find((p) => p.part === activePart);
+
+  useEffect(() => {
+    setPartContent(currentPart?.content ?? "");
+  }, [activePart]);
+
+  async function savePartContent() {
+    if (!currentPart) return;
+    await fetchJSON(
+      `/api/projects/${projectId}/prompt-pack/parts/${currentPart.part}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: partContent }),
+      }
+    );
+    alert(`Part ${currentPart.part} content updated`);
+  }
+
+  /* =======================
+     Init
+  ======================= */
 
   useEffect(() => {
     (async () => {
       try {
-        setLoadingStatus(true);
-        setError(null);
-
-        // 1) PREVIEW / ENSURE metadata_generate prompt exists
-        // (server sẽ tạo file metadata_generate.txt nếu chưa có)
-        await fetch(`/api/projects/${projectId}/prompts/ensure?step=metadata_generate`, {
-          method: "POST",
-          cache: "no-store",
-        });
-
-        // 2) refresh status
+        await fetch(
+          `/api/projects/${projectId}/prompts/ensure?step=prompt_generate_prompt_content`,
+          { method: "POST", cache: "no-store" }
+        );
         await loadStatus();
-
-        // 3) auto-show metadata prompt right away
-        await showPrompt("metadata_generate");
+        await showPrompt("prompt_generate_prompt_content");
       } catch (e: any) {
-        setError(e?.message || "Failed to preview metadata_generate");
-      } finally {
-        setLoadingStatus(false);
+        setError(e?.message || "Initialization failed");
       }
     })();
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
+  /* =======================
+     Derived
+  ======================= */
 
-  const parsed = useMemo(() => parsePrompt(content), [content]);
-
-  const meta = status?.metadata_generate;
   const qa = status?.script_qa;
   const refine = status?.script_refine;
-  const refineDisabled = loadingStatus || !(refine?.enabled);
-  const metaDisabled = loadingStatus || !(meta?.enabled);
-  const qaDisabled = loadingStatus || !(qa?.enabled);
+
+  /* =======================
+     Render
+  ======================= */
 
   return (
     <div className="container-fluid">
-      <div className="d-flex align-items-center justify-content-between mb-3">
+      <div className="d-flex justify-content-between mb-3">
         <div>
           <Link className="link-secondary" href={`/projects/${projectId}`}>
             ← Back to Project
           </Link>
-          <h3 className="mt-2 mb-0">ChatGPT Prompts (Preview)</h3>
+          <h3 className="mt-2 mb-0">ChatGPT Prompts</h3>
           <div className="text-secondary small">Project: {projectId}</div>
         </div>
-
-        <button className="btn btn-sm btn-outline-secondary" onClick={loadStatus} disabled={loadingStatus}>
-          Refresh
-        </button>
       </div>
 
-      {error ? <div className="alert alert-danger">{error}</div> : null}
+      {error && <div className="alert alert-danger">{error}</div>}
 
+      {/* Main Tabs */}
       <div className="d-flex gap-2 mb-3">
         <button
-          className={`btn btn-sm ${activeStep === "metadata_generate" ? "btn-primary" : "btn-outline-primary"}`}
-          disabled={metaDisabled}
-          onClick={() => showPrompt("metadata_generate")}
-          title={meta?.reason || ""}
+          className={`btn btn-sm ${mainTab === "prompt_pack" ? "btn-primary" : "btn-outline-primary"
+            }`}
+          onClick={() => setMainTab("prompt_pack")}
         >
-          1) metadata_generate
-          {loadingStatus ? "" : meta?.exists ? " ✅" : " ⏳"}
+          Prompt Pack
         </button>
-
         <button
-          className={`btn btn-sm ${activeStep === "script_qa" ? "btn-primary" : "btn-outline-primary"}`}
-          disabled={qaDisabled}
-          onClick={() => {
-            // nếu file đã có thì show, chưa có thì ensure + show
-            if (qa?.exists) showPrompt("script_qa");
-            else ensureAndShowScriptQA();
-          }}
-          title={qa?.reason || ""}
+          className={`btn btn-sm ${mainTab === "regenerate_prompt_pack"
+              ? "btn-primary"
+              : "btn-outline-primary"
+            }`}
+          onClick={() => setMainTab("regenerate_prompt_pack")}
         >
-          2) script_qa
-          {loadingStatus ? "" : qa?.exists ? " ✅" : qa?.enabled ? " ⏳" : " 🔒"}
+          Regenerate Prompt Pack
         </button>
-
         <button
-          className={`btn btn-sm ${activeStep === "script_refine" ? "btn-primary" : "btn-outline-primary"}`}
-          disabled={refineDisabled}
-          onClick={() => {
-            if (refine?.exists) showPrompt("script_refine");
-            else fetchJSON(`/api/projects/${projectId}/prompts/ensure?step=script_refine`, { method: "POST" })
-              .then(loadStatus)
-              .then(() => showPrompt("script_refine"))
-              .catch((e: any) => setError(e?.message || "Failed to ensure script_refine"));
-          }}
-          title={refine?.reason || ""}
+          className="btn btn-sm btn-outline-primary"
+          onClick={() => showPrompt("script_qa")}
+          disabled={!qa?.enabled}
         >
-          3) script_refine
-          {loadingStatus ? "" : refine?.exists ? " ✅" : refine?.enabled ? " ⏳" : " 🔒"}
+          script_qa
         </button>
-
+        <button
+          className="btn btn-sm btn-outline-primary"
+          onClick={() => showPrompt("script_refine")}
+          disabled={!refine?.enabled}
+        >
+          script_refine
+        </button>
       </div>
 
-      {qa?.enabled === false && qa?.reason ? (
-        <div className="alert alert-warning py-2">
-          <b>script_qa</b> is disabled: {qa.reason}
-        </div>
-      ) : null}
-
+      {/* CONTENT */}
       <div className="card">
-        <div className="card-header d-flex align-items-center justify-content-between">
-          <div className="fw-bold">Prompt content</div>
-          <button
-            className={`btn btn-sm ${copied ? "btn-success" : "btn-outline-secondary"}`}
-            onClick={handleCopy}
-            disabled={!content}
-          >
-            {copied ? "✓ Copied" : "Copy"}
-          </button>
-        </div>
-
         <div className="card-body">
           {loadingContent ? (
-            <div className="text-secondary">Loading…</div>
-          ) : !content ? (
-            <div className="text-secondary">Click a button to load the prompt.</div>
-          ) : (
-            <div style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" }}>
-              {parsed.system ? (
-                <>
-                  <div className="fw-bold">system</div>
-                  <pre className="p-2 border rounded bg-dark" style={{ whiteSpace: "pre-wrap" }}>
-                    {parsed.system}
-                  </pre>
-                </>
-              ) : null}
+            <div>Loading…</div>
+          ) : mainTab === "prompt_pack" ? (
+            <>
+              <div className="mb-3">
+                <button
+                  className="btn btn-sm btn-success me-2"
+                  onClick={savePromptPack}
+                >
+                  Save Prompt Pack
+                </button>
+                <button
+                  className="btn btn-sm btn-outline-secondary"
+                  onClick={() =>
+                    copyPrompt(promptSource, setCopiedPrompt)
+                  }
+                >
+                  {copiedPrompt ? "✓ Copied" : "Copy Prompt"}
+                </button>
+              </div>
+              <textarea
+                className="form-control font-monospace"
+                style={{ minHeight: 400 }}
+                value={jsonText}
+                onChange={(e) => setJsonText(e.target.value)}
+              />
+              <pre className="p-2 border bg-dark text-light mb-3">
+                {promptSource}
+              </pre>
 
-              {parsed.user ? (
+
+            </>
+          ) : (
+            <>
+              {/* Part tabs */}
+              <div className="d-flex gap-2 mb-3">
+                {parts.map((p) => (
+                  <button
+                    key={p.part}
+                    className={`btn btn-sm ${p.part === activePart
+                        ? "btn-primary"
+                        : "btn-outline-primary"
+                      }`}
+                    onClick={() => setActivePart(p.part)}
+                  >
+                    Part {p.part}
+                  </button>
+                ))}
+              </div>
+
+              {currentPart && (
                 <>
-                  <div className="fw-bold mt-3">user</div>
-                  <pre className="p-2 border rounded bg-dark" style={{ whiteSpace: "pre-wrap" }}>
-                    {parsed.user}
+                  <div className="mb-2 fw-bold">Generation Prompt</div>
+                  <button
+                    className="btn btn-sm btn-outline-secondary mb-2"
+                    onClick={() =>
+                      copyPrompt(
+                        currentPart.generation_prompt,
+                        setCopiedPartPrompt
+                      )
+                    }
+                  >
+                    {copiedPartPrompt ? "✓ Copied" : "Copy Prompt"}
+                  </button>
+                  <pre className="p-2 border bg-dark text-light mb-3">
+                    {currentPart.generation_prompt}
                   </pre>
-                </>
-              ) : (
-                <>
-                  <div className="fw-bold">raw</div>
-                  <pre className="p-2 border rounded bg-dark" style={{ whiteSpace: "pre-wrap" }}>
-                    {parsed.raw}
-                  </pre>
+
+                  <div className="fw-bold mb-1">Generated Content</div>
+                  <textarea
+                    className="form-control"
+                    style={{ minHeight: 300 }}
+                    value={partContent}
+                    onChange={(e) => setPartContent(e.target.value)}
+                  />
+
+                  <button
+                    className="btn btn-success mt-3"
+                    onClick={savePartContent}
+                  >
+                    Save Content
+                  </button>
                 </>
               )}
-            </div>
+            </>
           )}
         </div>
       </div>

@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Param, Post } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Put } from "@nestjs/common";
 import { ProjectsService } from "./projects.service";
 import { PipelineService } from "../pipeline/pipeline.service";
 import { Query } from "@nestjs/common";
 import { updateAllScriptJson } from "./prompts/updateAllScriptJson";
+import { UpdatePromptPackDto } from "./dto/updatePromptPack.dto";
 type CreateProjectDto = {
   topic: string;
   language?: string;
@@ -96,6 +97,30 @@ export class ProjectsController {
   updateAllScript(@Param("id") id: string, @Body() body: any) {
     // body kỳ vọng là object JSON (đã parse bởi Nest)
     return updateAllScriptJson(id, body);
+  }
+
+  @Put(':projectId/prompt-pack')
+  updatePromptPack(
+    @Param('projectId') projectId: string,
+    @Body() dto: UpdatePromptPackDto,
+  ) {
+    return this.projects.updatePromptPack(
+      projectId,
+      dto.prompt_pack_json,
+    );
+  }
+
+  @Put(':projectId/prompt-pack/parts/:part')
+  updatePromptPackPartContent(
+    @Param('projectId') projectId: string,
+    @Param('part') part: string,
+    @Body() body: { content: string }
+  ) {
+    return this.projects.updatePromptPackPartContent(
+      projectId,
+      Number(part),
+      body.content
+    );
   }
 
 }

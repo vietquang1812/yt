@@ -12,8 +12,8 @@ export async function getPromptStatus(projectId: string) {
 
   const root = projectRootDir(projectId);
 
-  // metadata_generate
-  const metaPath = promptFilePath(projectId, "metadata_generate");
+  // prompt_generate_prompt_content
+  const metaPath = promptFilePath(projectId, "prompt_generate_prompt_content");
   const metaExists = await exists(metaPath);
 
   // script_qa
@@ -42,7 +42,7 @@ export async function getPromptStatus(projectId: string) {
   const refineEnabled = refineExists || refineMissing.length === 0;
 
   const status: Record<PromptStep, PromptStatus> = {
-    metadata_generate: { step: "metadata_generate", exists: metaExists, enabled: true, reason: null },
+    prompt_generate_prompt_content: { step: "prompt_generate_prompt_content", exists: metaExists, enabled: true, reason: null },
     script_qa: {
       step: "script_qa",
       exists: qaExists,
@@ -66,7 +66,7 @@ export async function getPromptContent(projectId: string, step?: string) {
   const s: PromptStep =
     step === "script_qa" ? "script_qa" :
     step === "script_refine" ? "script_refine" :
-    "metadata_generate";
+    "prompt_generate_prompt_content";
 
   const p = promptFilePath(projectId, s);
   const text = await readIfExists(p);
@@ -81,13 +81,13 @@ export async function ensurePrompt(projectId: string, step?: string) {
   const s: PromptStep =
     step === "script_qa" ? "script_qa" :
     step === "script_refine" ? "script_refine" :
-    "metadata_generate";
+    "prompt_generate_prompt_content";
 
   const p = promptFilePath(projectId, s);
   await ensureDir(path.dirname(p));
   if (await exists(p)) return { ok: true, step: s, enabled: true, created: false };
 
-  if (s === "metadata_generate") {
+  if (s === "prompt_generate_prompt_content") {
     const prompt = await buildMetadataGeneratePrompt(projectId);
     await fs.writeFile(p, prompt, "utf8");
     return { ok: true, step: s, enabled: true, created: true };

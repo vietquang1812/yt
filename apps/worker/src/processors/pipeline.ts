@@ -41,7 +41,7 @@ export async function handlePipelineJob(job: Job<any>) {
     const project = await prisma.project.findUnique({ where: { id: projectId } });
     if (!project) throw new Error(`Project not found: ${projectId}`);
 
-    if (step === "metadata_generate") {
+    if (step === "prompt_generate_prompt_content") {
       await handleMetadataGenerate(job, project);
       await enqueueLLMStep(projectId, "script_qa");
       return;

@@ -5,7 +5,7 @@ export type PromptName =
   | "script_generate"
   | "script_refine"
   | "script_finalize"
-  | "content_pack_generate"
+  | "prompt_generate_prompt_content"
   | "script_qa"
   | "script_segments_generate";
 
