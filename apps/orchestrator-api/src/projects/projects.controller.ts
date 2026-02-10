@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Post, Put } from "@nestjs/common";
+import { Inject, forwardRef } from "@nestjs/common";
 import { ProjectsService } from "./projects.service";
 import { PipelineService } from "../pipeline/pipeline.service";
 import { Query } from "@nestjs/common";
@@ -19,7 +20,10 @@ type CreateProjectDto = {
 @Controller("projects")
 export class ProjectsController {
   constructor(
+    @Inject(forwardRef(() => ProjectsService))
     private readonly projects: ProjectsService,
+
+    @Inject(forwardRef(() => PipelineService))
     private readonly pipeline: PipelineService
   ) { }
 
@@ -68,6 +72,15 @@ export class ProjectsController {
   @Get(":id/artifacts/:artifactId/content")
   artifactContent(@Param("artifactId") artifactId: string) {
     return this.projects.getArtifactContent(artifactId);
+  }
+
+  @Put(":id/artifacts/script_qa")
+  saveScriptQa(
+    @Param("id") projectId: string,
+    @Body() body: any
+  ) {
+    console.log('updateScriptQaJSON', projectId, body)
+    return this.projects.updateScriptQaJSON(projectId, body)
   }
 
   @Post(":id/prompts/preview")
@@ -119,8 +132,21 @@ export class ProjectsController {
     return this.projects.updatePromptPackPartContent(
       projectId,
       Number(part),
-      body.content
+      body.content,
     );
   }
+
+  @Get(":projectId/prompts/regenerate")
+  getRegeneratePrompt(
+    @Param("projectId") projectId: string,
+    @Query("part") part: string
+  ) {
+    return this.projects.buildRegeneratePrompt(
+      projectId,
+      Number(part)
+    );
+  }
+
+
 
 }

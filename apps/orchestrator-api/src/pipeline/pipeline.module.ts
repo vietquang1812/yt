@@ -1,11 +1,10 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { PipelineService } from "./pipeline.service";
-import { QueueModule } from "../queue/queue.module";
+import { ProjectsModule } from "../projects/projects.module";
 
 @Module({
-  imports: [QueueModule],
+  imports: [forwardRef(() => ProjectsModule)],
   providers: [PipelineService],
   exports: [PipelineService],
 })
 export class PipelineModule {}
-

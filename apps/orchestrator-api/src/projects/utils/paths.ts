@@ -2,7 +2,12 @@
 import { BadRequestException } from "@nestjs/common";
 import * as path from "node:path";
 import * as fssync from "node:fs";
+import { ArtifactStorage } from "@yt-ai/common";
 
+const storage = new ArtifactStorage(
+    (process.env.STORAGE_DRIVER as "local") || "local",
+    process.env.STORAGE_DIR? '../../'+ process.env.STORAGE_DIR: "../../storage/projects"
+);
 export function safeProjectId(projectId: string) {
   if (!projectId || projectId.includes("/") || projectId.includes("\\") || projectId.includes("..")) {
     throw new BadRequestException("Invalid projectId");
@@ -22,7 +27,11 @@ export function projectRootDir(projectId: string) {
 
 export function promptFilePath(projectId: string, step: string) {
   const root = projectRootDir(projectId);
-  return path.join(root, "prompts", `${step}.txt`);
+  return path.join(root, "prompts", `${step}.md`);
+}
+
+export async function promptProjectFileContent(projectId: string, step: string) {
+  return await storage.get(projectId, "prompts", `${step}.txt`);
 }
 
 export function resolveConfigDir(): string {

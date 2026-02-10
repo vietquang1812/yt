@@ -41,3 +41,15 @@ export type QaReport = {
 
 // Khi poll, ta cần createdAt của artifact QA để so với action start
 export type QaReportWithMeta = QaReport & { createdAt?: string };
+
+/* =======================
+   Types PromptPackPart
+======================= */
+
+export type PromptPackPart = {
+  part: number;
+  role?: string;
+  generation_prompt: string;
+  content?: string;
+  word_count?: number;
+};

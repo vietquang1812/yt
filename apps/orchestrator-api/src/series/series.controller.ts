@@ -1,9 +1,13 @@
-import { Body, Controller, Get, Param, Patch, Post } from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Post, Inject } from "@nestjs/common";
 import { SeriesService } from "./series.service";
+import { forwardRef} from "@nestjs/common";
 
 @Controller("series")
 export class SeriesController {
-  constructor(private readonly series: SeriesService) {}
+  constructor(
+    
+    @Inject(forwardRef(() => SeriesService))
+    private readonly series: SeriesService) {}
 
   @Get()
   list() {

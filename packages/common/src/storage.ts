@@ -7,7 +7,7 @@ export type PutResult = {
 };
 
 export class ArtifactStorage {
-  constructor(private driver: "local", private baseDir: string) {}
+  constructor(private driver: "local", private baseDir: string) { }
 
   async put(projectId: string, filename: string, data: Buffer): Promise<PutResult> {
     if (this.driver !== "local") throw new Error("Only local storage is implemented");
@@ -22,5 +22,30 @@ export class ArtifactStorage {
       uri: filepath, // lưu absolute/relative tùy bạn; hiện đang lưu path trong container
       meta: { bytes: data.length, filename },
     };
+  }
+
+  async get(projectId: string, folder: string, filename: string): Promise<string | null> {
+    if (this.driver !== "local") throw new Error("Only local storage is implemented");
+
+    const dir = path.join(this.baseDir, projectId, folder);
+    const filepath = path.join(dir, filename);
+    try {
+      return await fs.readFile(filepath, "utf8");
+    } catch (e) {
+      console.log(`e: ${e}`)
+
+      return null;
+    }
+  }
+
+  async readByUri(uri: string): Promise<string | null> {
+    if (this.driver !== "local") throw new Error("Only local storage is implemented");
+    try {
+      return await fs.readFile(uri, "utf8");
+    } catch (e) {
+      console.log(`e: ${e}`)
+
+      return null;
+    }
   }
 }

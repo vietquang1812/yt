@@ -1,10 +1,10 @@
 // apps/orchestrator-api/src/projects/prompts/promptManager.ts
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-
+import {  BadRequestException } from "@nestjs/common";
 import { PromptStep, PromptStatus } from "../types";
 import { exists, readIfExists, ensureDir } from "../utils/fs";
-import { safeProjectId, promptFilePath, projectRootDir } from "../utils/paths";
+import { safeProjectId, promptFilePath, projectRootDir, promptProjectFileContent } from "../utils/paths";
 import { buildMetadataGeneratePrompt, buildScriptQAPrompt, buildScriptRefinePrompt } from "./promptBuilders";
 
 export async function getPromptStatus(projectId: string) {
@@ -68,9 +68,13 @@ export async function getPromptContent(projectId: string, step?: string) {
     step === "script_refine" ? "script_refine" :
     "prompt_generate_prompt_content";
 
-  const p = promptFilePath(projectId, s);
-  const text = await readIfExists(p);
-  if (!text) throw new Error(`Prompt file not found for step: ${s}`);
+  // const p = promptFilePath(projectId, s);
+  let text = '';
+  if (s === "prompt_generate_prompt_content") {
+     text = await buildMetadataGeneratePrompt(projectId);
+
+  }
+  if (!text) throw new BadRequestException(`Prompt file not found for step: ${s}`);
 
   return { ok: true, step: s, content: text };
 }
@@ -89,7 +93,7 @@ export async function ensurePrompt(projectId: string, step?: string) {
 
   if (s === "prompt_generate_prompt_content") {
     const prompt = await buildMetadataGeneratePrompt(projectId);
-    await fs.writeFile(p, prompt, "utf8");
+    await fs.writeFile(p, prompt, "utf8"); 
     return { ok: true, step: s, enabled: true, created: true };
   }
 

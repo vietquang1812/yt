@@ -1,8 +1,7 @@
 import { ArtifactType, prisma } from "@yt-ai/db";
-import {safeProjectId } from "../utils/paths";
+import { safeProjectId } from "../utils/paths";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { validateScriptPack } from "../validators/scriptPack";
-import { saveScriptAndMeta } from "../functions/artifacts";
 import { saveArtifact } from "../lib/artifacts";
 
 export async function updateAllScriptJson(projectId: string, data: any) {
@@ -16,13 +15,13 @@ export async function updateAllScriptJson(projectId: string, data: any) {
         throw new BadRequestException("Body must be a JSON object/array");
     }
     if (typeof data !== "object") {
-    throw new BadRequestException("Body must be JSON (object/array), not a primitive");
-  }
+        throw new BadRequestException("Body must be JSON (object/array), not a primitive");
+    }
 
     let pack = validateScriptPack(data);
 
     // await saveScriptAndMeta(projectId, pack, "prompt_generate_prompt_content");
-    
+
     if (pack.next_ideas && pack.next_ideas.length > 0) {
         await saveArtifact({
             projectId,
