@@ -79,7 +79,6 @@ export class ProjectsController {
     @Param("id") projectId: string,
     @Body() body: any
   ) {
-    console.log('updateScriptQaJSON', projectId, body)
     return this.projects.updateScriptQaJSON(projectId, body)
   }
 

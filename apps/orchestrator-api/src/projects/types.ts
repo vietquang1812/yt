@@ -25,3 +25,15 @@ export type UpdateProjectStatusInput = {
   id: string;
   status: ProjectStatus;
 };
+export type PromptPackPart = {
+  part: number;
+  generation_prompt: string;
+  role: string;
+  content?: string;
+  target_words?: number;
+};
+
+export type PromptPackJson = {
+  parts: PromptPackPart[];
+};
+

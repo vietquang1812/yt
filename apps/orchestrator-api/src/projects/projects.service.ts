@@ -13,37 +13,9 @@ import { toChatGPTFormat } from "./utils/promptFormat";
 import { loadPrompt, loadConfigText } from "./prompts/promptLoader";
 import * as promptManager from "./prompts/promptManager";
 import { validatePromptPack } from './validators/promptPack.validator';
-import { Prisma } from "@prisma/client";
 import { updateScriptQaJSON } from "./prompts/updateScriptQaJSON";
+import { parsePromptPack } from "./functions/parsePromptPack";
 
-type PromptPackPart = {
-  part: number;
-  generation_prompt: string;
-  role: string;
-  content?: string;
-  target_words?: number;
-};
-
-type PromptPackJson = {
-  parts: PromptPackPart[];
-};
-
-/* =======================
-   Helpers
-======================= */
-
-function parsePromptPack(
-  json: Prisma.JsonValue | null
-): PromptPackJson | null {
-  if (
-    typeof json === "object" &&
-    json !== null &&
-    !Array.isArray(json)
-  ) {
-    return json as PromptPackJson;
-  }
-  return null;
-}
 
 @Injectable()
 export class ProjectsService {

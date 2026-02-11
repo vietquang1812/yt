@@ -72,7 +72,10 @@ export async function getPromptContent(projectId: string, step?: string) {
   let text = '';
   if (s === "prompt_generate_prompt_content") {
      text = await buildMetadataGeneratePrompt(projectId);
-
+  }
+  if (s === "script_qa") {
+    const built = await buildScriptQAPrompt(projectId);
+    return { ok: true, step: s, content: built.prompt };
   }
   if (!text) throw new BadRequestException(`Prompt file not found for step: ${s}`);
 
@@ -100,7 +103,7 @@ export async function ensurePrompt(projectId: string, step?: string) {
   if (s === "script_qa") {
     const built = await buildScriptQAPrompt(projectId);
     if (!built.ok) {
-      return { ok: true, step: s, enabled: false, created: false, reason: `Missing prerequisites: ${built.missing.join(", ")}` };
+      return { ok: true, step: s, enabled: false, created: false, reason: `Missing prerequisites: ` };
     }
     await fs.writeFile(p, built.prompt, "utf8");
     return { ok: true, step: s, enabled: true, created: true };

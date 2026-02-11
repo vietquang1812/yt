@@ -8,6 +8,8 @@ import { projectRootDir, resolveConfigDir } from "../utils/paths";
 import { readIfExists } from "../utils/fs";
 import { loadConfigText } from "./promptLoader";
 import { loadSeriesContext } from "./seriesContext";
+import { parsePromptPack } from "../functions/parsePromptPack";
+import { BadRequestException } from "@nestjs/common";
 
 export async function buildMetadataGeneratePrompt(projectId: string) {
   const cfgDir = resolveConfigDir();
@@ -20,9 +22,9 @@ export async function buildMetadataGeneratePrompt(projectId: string) {
 
   const series = project.seriesId
     ? await prisma.series.findUnique({
-        where: { id: project.seriesId },
-        include: { memory: true },
-      })
+      where: { id: project.seriesId },
+      include: { memory: true },
+    })
     : null;
 
   const personaYaml = await fs.readFile(path.join(cfgDir, "persona.yaml"), "utf8");
@@ -46,31 +48,21 @@ export async function buildMetadataGeneratePrompt(projectId: string) {
 
 export async function buildScriptQAPrompt(projectId: string) {
   const cfgDir = resolveConfigDir();
-  const root = projectRootDir(projectId);
-
-  const scriptPath = path.join(root, "script_final.md");
-  const metaPath = path.join(root, "metadata.json");
-  const ideasPath = path.join(root, "next_ideas.json");
-
-  const [scriptText, metadataText, nextIdeasText] = await Promise.all([
-    readIfExists(scriptPath),
-    readIfExists(metaPath),
-    readIfExists(ideasPath),
-  ]);
-
-  const missing: string[] = [];
-  if (!scriptText) missing.push("script_final.md");
-  if (!metadataText) missing.push("metadata.json");
-  if (!nextIdeasText) missing.push("next_ideas.json");
-
-  if (missing.length > 0) return { ok: false as const, missing };
 
   const tmpl = await fs.readFile(path.join(cfgDir, "prompts", "script_qa.md"), "utf8");
+  const project = await prisma.project.findUnique({ where: { id: projectId } });
+  if (!project) throw new BadRequestException(`Project not found: ${projectId}`);
+
+  const pack = parsePromptPack(project.prompt_pack_json);
+
+  if (!pack?.parts?.length) {
+    return { ok: false as const, prompt: '' };
+  }
+  const scriptText = pack?.parts?.map(p => p.content).join('\n\n')
   const user = renderTemplate(tmpl, {
     script_text: scriptText,
-    metadata_json: metadataText,
-    next_ideas_json: nextIdeasText,
-    topic_hint: "",
+    topic: project.topic,
+    angle: project.pillar
   });
 
   const system = `You are a strict QA reviewer for YouTube scripts. Follow the rubric. Return exactly what the prompt requests.`;
