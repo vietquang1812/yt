@@ -8,6 +8,7 @@ import { safeProjectId, promptFilePath, projectRootDir } from "../utils/paths";
 import { buildScriptQAPrompt } from "./promptBuilders";
 import { buildMetadataGeneratePrompt } from "./buildMetadataGeneratePrompt";
 import { buildScriptRefinePrompt } from "./buildScriptRefinePrompt";
+import { buildSegmentsGeneratePrompt } from "./buildSegmentsGeneratePrompt";
 
 export async function getPromptStatus(projectId: string) {
   safeProjectId(projectId);
@@ -57,18 +58,24 @@ export async function getPromptStatus(projectId: string) {
       enabled: refineEnabled,
       reason: refineEnabled ? null : `Missing prerequisites: ${refineMissing.join(", ")}`,
     },
+    script_segments_generate: {
+      step: "script_segments_generate",
+      exists: refineExists,
+      enabled: refineEnabled,
+      reason: refineEnabled ? null : `Missing prerequisites: ${refineMissing.join(", ")}`,
+    },
   };
 
   return { ok: true, status };
 }
 
-export async function getPromptContent(projectId: string, step?: string) {
+export async function getPromptContent(projectId: string, step?: string, index?: number) {
   safeProjectId(projectId);
-
   const s: PromptStep =
     step === "script_qa" ? "script_qa" :
       step === "script_refine" ? "script_refine" :
-        "prompt_generate_prompt_content";
+        step === "script_segments_generate" ? "script_segments_generate" :
+          "prompt_generate_prompt_content";
 
   // const p = promptFilePath(projectId, s);
   let text = '';
@@ -81,6 +88,9 @@ export async function getPromptContent(projectId: string, step?: string) {
 
   if (s === "script_refine") {
     text = await buildScriptRefinePrompt(projectId);
+  }
+  if (s === "script_segments_generate") {
+    text = await buildSegmentsGeneratePrompt(projectId, index);
   }
 
   if (!text) throw new BadRequestException(`Prompt file not found for step: ${s}`);

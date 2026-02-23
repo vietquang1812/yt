@@ -50,7 +50,28 @@ export type PromptPackPart = {
   part: number;
   role?: string;
   word_count?: number;
-  target_words?:string;
+  target_words?: string;
   generation_prompt: string;
   content?: string;
 };
+
+export type ProjectType = {
+  id: String
+  topic: String
+  language: String
+  durationMinutes: number
+  format: String
+  tone: String
+  pillar: String
+
+  // NEW: link to Series
+  seriesId: String
+
+  artifacts: []
+  jobs: []
+  analytics: []
+
+  qa_json: JSON;
+  prompt_pack_json: JSON;
+
+}

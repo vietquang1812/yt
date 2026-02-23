@@ -12,10 +12,6 @@ type PromptPackPart = {
     content: string;
 };
 
-type ScriptQAPart = {
-    part: number;
-    qa: string;
-};
 
 /* =======================
    Component
@@ -25,13 +21,14 @@ export function ScriptQATab({
     projectId,
     project,
     parts,
+    onAction
 }: {
     projectId: string;
     project: any;
     parts: PromptPackPart[];
+    onAction: Function;
 }) {
     const [prompt, setPrompt] = useState("");
-    const [qaParts, setQaParts] = useState<ScriptQAPart[]>([]);
     const [loading, setLoading] = useState(false);
     const [copied, setCopied] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -56,12 +53,6 @@ export function ScriptQATab({
                 setPrompt(promptRes.content || "");
 
                 // init qa per part
-                setQaParts(
-                    parts.map((p) => ({
-                        part: p.part,
-                        qa: "",
-                    }))
-                );
             } catch (e: any) {
                 setError(e.message);
             } finally {
@@ -71,14 +62,18 @@ export function ScriptQATab({
     }, [projectId, parts]);
 
     async function saveScriptQA() {
+        try {
+            JSON.parse(qaContent)
+        } catch (error) {
+            setError('error JSON type')
+            return
+        }
         await fetchJSON(`/api/projects/${projectId}/artifacts/script_qa`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                parts: qaParts,
-            }),
+            body: qaContent,
         });
-
+        onAction()
         alert("Script QA updated");
     }
 
@@ -110,7 +105,7 @@ export function ScriptQATab({
                     {copied ? "✓ Copied" : "Copy Prompt"}
                 </button>
             </div>
-            <div className="fw-bold mb-2">Script QA per Part</div>
+            <div className="fw-bold mb-2">Script QA</div>
             <textarea
                 className="form-control mt-2"
                 style={{ minHeight: 300 }}

@@ -4,7 +4,7 @@ INPUTS:
 - Topic: {{topic}}
 - Angle: {{angle}}
 
-Original script (full):
+Full JSON:
 {{script_text}}
 
 QA report JSON (issues + suggested fixes):
@@ -25,7 +25,7 @@ GOALS (STRICT):
 9) No repetition between parts.
 
 OUTPUT:
-Return ONLY valid JSON in this exact schema:
+Return ONLY valid JSON in the following schema:
 
 {
   "channel": "Simple Mind Studio",
@@ -54,9 +54,9 @@ Return ONLY valid JSON in this exact schema:
 FINAL CHECK:
 - Fix every QA issue. If conflict exists, prioritize safety compliance.
 - total_word_count is 3000–5000.
-- parts length is 1–6.
+- Do not change parts length
 - Part 1 contains greeting + subscribe CTA after hook.
-- Parts 2–6 begin with one transitional sentence.
+- Parts 2–8 begin with one transitional sentence.
 - Output strictly valid JSON, nothing else.
 
 SERIES BIBLE:
@@ -66,3 +66,8 @@ SERIES MEMORY:
 {{series_memory_json}}
 
 Continuity Mode: {{continuity_mode}}
+
+RULES:
+- Please adjust the script according to the QA report's JSON editing requirements; 
+- only edit, do not write new code.
+- Output must be strictly valid JSON and nothing else.   

@@ -92,7 +92,7 @@ The prompt for Part 1 MUST instruct the future model to:
 
 ---
 
-### PARTS 2–6 (IF PRESENT)
+### PARTS 2–8 (IF PRESENT)
 
 Each prompt MUST instruct the future model to:
 - Begin with exactly ONE transitional sentence connecting from the previous part
@@ -174,7 +174,7 @@ Return ONLY valid JSON in the following schema:
 ## FINAL CHECK (MANDATORY)
 
 Before outputting JSON:
-- Ensure 4–8 parts are created
+- Ensure 5–8 parts are created
 - Each part has a **clear, high-quality generation_prompt**
 - All `content` fields are empty strings
 - No narrative text is generated

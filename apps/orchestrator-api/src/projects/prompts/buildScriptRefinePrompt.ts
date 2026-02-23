@@ -27,10 +27,10 @@ export async function buildScriptRefinePrompt(projectId: string) {
     const ctx = await loadSeriesContext(projectId);
     const pack = parsePromptPack(project.prompt_pack_json);
     if (!pack?.parts?.length) {
-            throw new BadRequestException("Prompt pack not found");
-        }
-    const scriptText = pack.parts.map(p => p.content).join('\n\n')
-    const qaReportText = project.qa_json
+        throw new BadRequestException("Prompt pack not found");
+    }
+    const scriptText = JSON.stringify(pack.parts, null, 2)
+    const qaReportText = JSON.stringify(project.qa_json, null, 2)
     const user = renderTemplate(tmpl, {
         topic: project.topic,
         angle: project.pillar,

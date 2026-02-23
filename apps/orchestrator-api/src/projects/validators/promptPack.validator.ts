@@ -27,7 +27,7 @@ export function validatePromptPack(pack: any) {
       throw new BadRequestException('generation_prompt must be string');
     }
 
-    if (part.generation_prompt.length < 150) {
+    if (part.generation_prompt.length < 150 && part.generation_prompt.length != 0) {
     console.log(6)
       throw new BadRequestException(
         `generation_prompt too short for part ${part.part}`

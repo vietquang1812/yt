@@ -96,8 +96,12 @@ export class ProjectsController {
   }
 
   @Get(":id/prompts/content")
-  promptContent(@Param("id") id: string, @Query("step") step?: string) {
-    return this.projects.getPromptContent(id, step);
+  promptContent(
+    @Param("id") id: string,
+    @Query("step") step?: string,
+    @Query("index") index?: string
+  ) {
+    return this.projects.getPromptContent(id, step, Number(index));
   }
 
   @Post(":id/all-script")
@@ -129,12 +133,25 @@ export class ProjectsController {
       body.content,
     );
   }
+  @Put(':projectId/segments/parts/:part')
+  updateSegmentsContent(
+    @Param('projectId') projectId: string,
+    @Param('part') part: string,
+    @Body() body: { content: string }
+  ) {
+    return this.projects.updateSegmentsContent(
+      projectId,
+      Number(part),
+      body.content,
+    );
+  }
 
   @Get(":projectId/prompts/regenerate")
   getRegeneratePrompt(
     @Param("projectId") projectId: string,
     @Query("part") part: string
   ) {
+    console.log(projectId, part)
     return this.projects.buildServiceRegeneratePrompt(
       projectId,
       Number(part)

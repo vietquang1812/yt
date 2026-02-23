@@ -9,51 +9,34 @@ import { fetchJSON } from "@/lib/api/fetchJSON";
    Component
 ======================= */
 
-export function RegeneratePromptPackTab({
+export function SegmentsGenerateTab({
   project,
-  projectId,
-  parts,
   onAction
 }: {
   project: any;
-  projectId: string;
-  parts: PromptPackPart[];
   onAction: Function;
 }) {
-  const [activePart, setActivePart] = useState<number | null>(null);
   const [partPrompt, setPartPrompt] = useState("");
   const [partContent, setPartContent] = useState("");
   const [loadingPrompt, setLoadingPrompt] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copiedPrompt, setCopiedPrompt] = useState(false);
-
-  const hasData = parts.length > 0;
+  const [index, setIndex] = useState(1)
+  const hasData = project.prompt_pack_json.parts.length > 0;
 
   /* =======================
      Effects
   ======================= */
+    async function getPromptSegmentPart(part: number) {
+        setIndex(part)
+        try {
+        const p = project.prompt_pack_json.parts.find((p: PromptPackPart) => p.part === part )
 
-  // auto Part 1
-  useEffect(() => {
-    if (hasData) {
-      setActivePart(parts[0].part);
-    }
-  }, [hasData, parts]);
-
-  // load prompt when part changes
-  useEffect(() => {
-    if (activePart == null) return;
-
-    (async () => {
-      setLoadingPrompt(true);
-      setError(null);
-      try {
-        const res = await fetchJSON<{ ok: true; prompt: string }>(
-          `/api/projects/${projectId}/prompts/regenerate?part=${activePart}`
+        const res = await fetchJSON<{ ok: true; content: string }>(
+          `/api/projects/${project.id}/prompts/content?step=script_segments_generate&index=${p.part}`
         );
-        setPartPrompt(res.prompt);
+        setPartPrompt(res.content);
 
-        const p = parts.find((x) => x.part === activePart);
         const partJSON = {
           "part": p?.part,
           "role": p?.role,
@@ -66,14 +49,21 @@ export function RegeneratePromptPackTab({
       } finally {
         setLoadingPrompt(false);
       }
+    }
+
+  // load prompt when part changes
+  useEffect(() => {
+    (async () => {
+      setLoadingPrompt(true);
+      setError(null);
+      getPromptSegmentPart(1)
     })();
-  }, [activePart, projectId, parts]);
+  }, []);
 
   async function savePartContent() {
-    if (activePart == null) return;
 
     await fetchJSON(
-      `/api/projects/${projectId}/prompt-pack/parts/${activePart}`,
+      `/api/projects/${project.id}/segments/parts/${index}`,
       {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -81,7 +71,7 @@ export function RegeneratePromptPackTab({
       }
     );
     onAction();
-    alert(`Part ${activePart} content updated`);
+    alert(`Part ${index} content updated`);
     
   }
 
@@ -106,14 +96,14 @@ export function RegeneratePromptPackTab({
     <>
       {/* Part tabs */}
       <div className="d-flex gap-2 mb-3">
-        {parts.map((p) => (
+        {project.prompt_pack_json.parts.map((p: PromptPackPart) => (
           <button
             key={p.part}
-            className={`btn btn-sm ${p.part === activePart
+            className={`btn btn-sm ${p.part === index 
               ? "btn-primary"
               : "btn-outline-primary"
               }`}
-            onClick={() => setActivePart(p.part)}
+            onClick={() => getPromptSegmentPart(p.part)}
           >
             Part {p.part}
           </button>

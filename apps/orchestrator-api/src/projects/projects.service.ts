@@ -143,9 +143,10 @@ export class ProjectsService {
   async getPromptStatus(projectId: string) {
     return promptManager.getPromptStatus(projectId);
   }
-  async getPromptContent(projectId: string, step?: string) {
+  async getPromptContent(projectId: string, step?: string, index?: number) {
+    console.log(projectId, step, index)
     try {
-      return await promptManager.getPromptContent(projectId, step);
+      return await promptManager.getPromptContent(projectId, step, index);
     } catch (e: any) {
       throw new NotFoundException(e?.message || "Prompt not found");
     }
@@ -167,6 +168,16 @@ export class ProjectsService {
       success: true,
       version: project.prompt_pack_version,
     };
+  }
+
+  async updateSegmentsContent(
+    projectId: string,
+    part: number,
+    content: string,
+  ) {
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+    });
   }
 
   async updatePromptPackPartContent(
@@ -205,10 +216,11 @@ export class ProjectsService {
 
 
   async buildServiceRegeneratePrompt(projectId: string, part: number) {
+    console.log(projectId, part)
     const promptText = await buildRegeneratePrompt(projectId, part);
     return {
       ok: true,
-      prompt:promptText,
+      prompt: promptText,
     };
   }
 

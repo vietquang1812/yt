@@ -7,6 +7,7 @@ import { ScriptQATab } from "./ScriptQATab";
 import { PromptPackPart } from './types'
 import { RefinePromptTab } from "./RefinePromptTab";
 import { fetchJSON } from "@/lib/api/fetchJSON";
+import { SegmentsGenerateTab } from "./SegmentsGenerateTab";
 /* =======================
    Component
 ======================= */
@@ -17,7 +18,7 @@ export function ProjectChatGPTPageClient({
   projectId: string;
 }) {
   const [mainTab, setMainTab] = useState<
-    "prompt_pack" | "regenerate" | "script_qa" | "script_refine"
+    "prompt_pack" | "regenerate" | "script_qa" | "script_refine" | "script_segments_generate"
   >("prompt_pack");
 
   const [parts, setParts] = useState<PromptPackPart[]>([]);
@@ -30,7 +31,6 @@ export function ProjectChatGPTPageClient({
   const canRunScriptQA =
     parts.length > 0 &&
     parts.every((p) => p.content && p.content.trim());
-
   /* =======================
      Load prompt pack
   ======================= */
@@ -58,6 +58,7 @@ export function ProjectChatGPTPageClient({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt_pack_json: JSON.parse(jsonText) }),
     });
+    loadPromptPack()
     alert("Prompt pack updated");
   }
 
@@ -131,6 +132,16 @@ export function ProjectChatGPTPageClient({
           Refine Content
         </button>
         
+        <button
+          className={`btn btn-sm ${mainTab === "script_segments_generate"
+              ? "btn-primary"
+              : "btn-outline-primary"
+            }`}
+          disabled={!hasPromptPackData}
+          onClick={() => setMainTab("script_segments_generate")}
+        >
+          Segments Generate
+        </button>
       </div>
 
       <div className="card">
@@ -164,19 +175,30 @@ export function ProjectChatGPTPageClient({
             </>
           ) : mainTab === "regenerate" ? (
             <RegeneratePromptPackTab
+              project={project}
               projectId={projectId}
               parts={parts}
+              onAction={loadPromptPack}
             />
           ) : mainTab === "script_qa" ? (
             <ScriptQATab
               projectId={projectId}
               project={project}
+              onAction={loadPromptPack}
               parts={parts as any}
             />
           ) : mainTab === "script_refine" ? (
             <>
               <RefinePromptTab
               project={project}
+              onAction={loadPromptPack}
+            />
+            </>
+          ): mainTab === "script_segments_generate" ? (
+            <>
+              <SegmentsGenerateTab
+              project={project}
+              onAction={loadPromptPack}
             />
             </>
           ) : (

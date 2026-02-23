@@ -12,7 +12,7 @@ export type CreateProjectDto = {
   continuityMode?: "none" | "light" | "occasionally_strong";
 };
 
-export type PromptStep = "prompt_generate_prompt_content" | "script_qa"| "script_refine";
+export type PromptStep = "prompt_generate_prompt_content" | "script_qa"| "script_refine" | "script_segments_generate";
 
 export type PromptStatus = {
   step: PromptStep;

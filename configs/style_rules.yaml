@@ -13,8 +13,8 @@ timing:
     min: 20
     max: 90
   total_duration_minutes:
-    min: 5
-    max: 8
+    min: 6
+    max: 12
 
 structure:
   required_sections:

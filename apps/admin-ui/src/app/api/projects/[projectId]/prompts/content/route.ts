@@ -6,5 +6,10 @@ export async function GET(req: NextRequest,
 ) {
     const { projectId } = await props.params;
     const step = req.nextUrl.searchParams.get("step") ?? "prompt_generate_prompt_content";
-    return proxyToOrchestrator(`/projects/${projectId}/prompts/content?step=${encodeURIComponent(step)}`);
+    const index = req.nextUrl.searchParams.get("index") ?? "";
+    let url = `/projects/${projectId}/prompts/content?step=${encodeURIComponent(step)}`;
+    if(index != ''){
+        url += `&index=${index}`
+    }
+    return proxyToOrchestrator(url);
 }

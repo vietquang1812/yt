@@ -3,9 +3,11 @@ import { useEffect, useState } from "react";
 import { PromptPackPart } from "./types";
 
 export function RefinePromptTab({
-    project
+    project,
+    onAction
 }: {
     project: any;
+    onAction: Function;
 }) {
     const [loading, setLoading] = useState(false);
     const [partPrompt, setPartPrompt] = useState("");
@@ -35,19 +37,40 @@ export function RefinePromptTab({
 
 
     async function saveScriptRefine() {
+        let parts: any
+        const projectParts = project.prompt_pack_json.parts
         try {
-            const data = JSON.parse(partContent)
+            const data = JSON.parse(partContent.trim())
             if (data.parts.length === 0) setError('missing Parts')
-            if (data.parts.length > project.parts.length) {
-                const parts = data.parts.map((p: PromptPackPart , index: number)=> {
-                    p.generation_prompt = project.parts[index].generation_prompt || ''
-                    return p;
+            if (data.parts.length > project.prompt_pack_json.parts.length) {
+                parts = data.parts.map((p: PromptPackPart, index: number) => {
+                    const part = { ...p, generation_prompt: projectParts[index]?.generation_prompt ?? '' }
+                    return part;
                 })
-            } else {
-            }
 
+            } else {
+                parts = data.parts.map((p: PromptPackPart, index: number) => {
+                    const part = { ...p, generation_prompt: projectParts[index]?.generation_prompt ?? '' }
+                    return part;
+                })
+            }
+            console.log(parts)
+            project.prompt_pack_json.parts = parts
+
+            await fetchJSON(`/api/projects/${project.id}/prompt-pack`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ prompt_pack_json: project.prompt_pack_json }),
+            });
+
+            onAction()
+            alert("Prompt pack updated");
         } catch (error) {
-            setError('Error JSON Type')
+            if (error instanceof Error) {
+                setError(error.message);
+            } else {
+                setError(String(error)); // Handle cases where something else was thrown
+            }
         }
     }
     async function copyPrompt() {
