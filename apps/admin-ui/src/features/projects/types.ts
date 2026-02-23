@@ -49,7 +49,8 @@ export type QaReportWithMeta = QaReport & { createdAt?: string };
 export type PromptPackPart = {
   part: number;
   role?: string;
+  word_count?: number;
+  target_words?:string;
   generation_prompt: string;
   content?: string;
-  word_count?: number;
 };

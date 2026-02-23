@@ -1,19 +1,8 @@
 "use client";
 
+import { fetchJSON } from "@/lib/api/fetchJSON";
 import { useEffect, useState } from "react";
 
-async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
-  const r = await fetch(url, { cache: "no-store", ...init });
-  const text = await r.text();
-  let data: any = null;
-  try { data = text ? JSON.parse(text) : null; } catch { /* ignore */ }
-
-  if (!r.ok) {
-    const msg = data?.error || data?.message || `Request failed: ${r.status}`;
-    throw new Error(msg);
-  }
-  return data as T;
-}
 
 export function AllScriptJsonCard({ projectId }: { projectId: string }) {
   const [text, setText] = useState<string>("{}");

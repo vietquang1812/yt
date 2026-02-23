@@ -4,47 +4,10 @@ import * as path from "node:path";
 import { prisma } from "@yt-ai/db";
 import { renderTemplate } from "../utils/template";
 import { toChatGPTFormat } from "../utils/promptFormat";
-import { projectRootDir, resolveConfigDir } from "../utils/paths";
-import { readIfExists } from "../utils/fs";
-import { loadConfigText } from "./promptLoader";
-import { loadSeriesContext } from "./seriesContext";
+import { resolveConfigDir } from "../utils/paths";
 import { parsePromptPack } from "../functions/parsePromptPack";
 import { BadRequestException } from "@nestjs/common";
 
-export async function buildMetadataGeneratePrompt(projectId: string) {
-  const cfgDir = resolveConfigDir();
-
-  const project = await prisma.project.findUnique({
-    where: { id: projectId },
-    include: { series: true },
-  });
-  if (!project) throw new Error("Project not found");
-
-  const series = project.seriesId
-    ? await prisma.series.findUnique({
-      where: { id: project.seriesId },
-      include: { memory: true },
-    })
-    : null;
-
-  const personaYaml = await fs.readFile(path.join(cfgDir, "persona.yaml"), "utf8");
-  const styleRulesYaml = await fs.readFile(path.join(cfgDir, "style_rules.yaml"), "utf8");
-  const tmpl = await fs.readFile(path.join(cfgDir, "prompts", "prompt_generate_prompt_content.md"), "utf8");
-
-  const user = renderTemplate(tmpl, {
-    topic: project.topic || "Untitled topic",
-    angle: project.pillar || "calm psychological reframe",
-    length_chars: 0,
-    persona_yaml: personaYaml,
-    style_rules_yaml: styleRulesYaml,
-    series_bible_json: JSON.stringify(series?.bible ?? {}, null, 2),
-    series_memory_json: JSON.stringify(series?.memory?.memory ?? {}, null, 2),
-    continuity_mode: project.continuityMode || "light",
-  });
-
-  const system = `You are a reliable content generator. Follow instructions strictly. Return exactly what the prompt requests.`;
-  return toChatGPTFormat(system, user);
-}
 
 export async function buildScriptQAPrompt(projectId: string) {
   const cfgDir = resolveConfigDir();
@@ -56,7 +19,7 @@ export async function buildScriptQAPrompt(projectId: string) {
   const pack = parsePromptPack(project.prompt_pack_json);
 
   if (!pack?.parts?.length) {
-    return { ok: false as const, prompt: '' };
+    return '';
   }
   const scriptText = pack?.parts?.map(p => p.content).join('\n\n')
   const user = renderTemplate(tmpl, {
@@ -66,43 +29,6 @@ export async function buildScriptQAPrompt(projectId: string) {
   });
 
   const system = `You are a strict QA reviewer for YouTube scripts. Follow the rubric. Return exactly what the prompt requests.`;
-  return { ok: true as const, prompt: toChatGPTFormat(system, user) };
+  return toChatGPTFormat(system, user);
 }
 
-export async function buildScriptRefinePrompt(projectId: string) {
-  const cfgDir = resolveConfigDir();
-  const root = projectRootDir(projectId);
-
-  const [scriptText, qaReportText] = await Promise.all([
-    readIfExists(path.join(root, "script_final.md")),
-    readIfExists(path.join(root, "qa_report.json")),
-  ]);
-
-  const missing: string[] = [];
-  if (!scriptText) missing.push("script_final.md");
-  if (!qaReportText) missing.push("qa_report.json");
-  if (missing.length > 0) return { ok: false as const, missing };
-
-  const tmpl = await fs.readFile(path.join(cfgDir, "prompts", "script_refine.md"), "utf8");
-  const project = await prisma.project.findUnique({ where: { id: projectId } });
-  if (!project) throw new Error(`Project not found: ${projectId}`);
-
-  const personaYaml = await loadConfigText("persona.yaml");
-  const styleRulesYaml = await loadConfigText("style_rules.yaml");
-  const ctx = await loadSeriesContext(projectId);
-
-  const user = renderTemplate(tmpl, {
-    topic: project.topic,
-    angle: project.pillar,
-    script_text: scriptText,
-    qa_report_json: qaReportText,
-    persona_yaml: personaYaml,
-    style_rules_yaml: styleRulesYaml,
-    series_bible_json: JSON.stringify(ctx.seriesBible ?? {}, null, 2),
-    series_memory_json: JSON.stringify(ctx.seriesMemory ?? {}, null, 2),
-    continuity_mode: ctx.continuityMode,
-  });
-
-  const system = `You are a precise script editor. Apply the QA report. Improve clarity and structure. Return exactly what the prompt requests.`;
-  return { ok: true as const, prompt: toChatGPTFormat(system, user) };
-}

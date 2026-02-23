@@ -1,5 +1,6 @@
 "use client";
 
+import { fetchJSON } from "@/lib/api/fetchJSON";
 import { useEffect, useState } from "react";
 
 /* =======================
@@ -15,27 +16,6 @@ type ScriptQAPart = {
     part: number;
     qa: string;
 };
-
-/* =======================
-   Helpers
-======================= */
-
-async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
-    const r = await fetch(url, { cache: "no-store", ...init });
-    const text = await r.text();
-
-    let data: any = null;
-    try {
-        data = text ? JSON.parse(text) : null;
-    } catch { }
-
-    if (!r.ok) {
-        const msg = data?.error || data?.message || `Request failed: ${r.status}`;
-        throw new Error(msg);
-    }
-
-    return data as T;
-}
 
 /* =======================
    Component
@@ -63,7 +43,6 @@ export function ScriptQATab({
 
     useEffect(() => {
         (async () => {
-            console.log(project)
             setQaContent(JSON.stringify(project?.qa_json, null, 2))
 
             setLoading(true);
@@ -130,8 +109,6 @@ export function ScriptQATab({
                 >
                     {copied ? "✓ Copied" : "Copy Prompt"}
                 </button>
-
-
             </div>
             <div className="fw-bold mb-2">Script QA per Part</div>
             <textarea

@@ -5,19 +5,8 @@ import { useEffect, useState } from "react";
 import { RegeneratePromptPackTab } from "./RegeneratePromptPackTab";
 import { ScriptQATab } from "./ScriptQATab";
 import { PromptPackPart } from './types'
-
-/* =======================
-   Helpers
-======================= */
-
-async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
-  const r = await fetch(url, { cache: "no-store", ...init });
-  const text = await r.text();
-  const data = text ? JSON.parse(text) : null;
-  if (!r.ok) throw new Error(data?.message || "Request failed");
-  return data as T;
-}
-
+import { RefinePromptTab } from "./RefinePromptTab";
+import { fetchJSON } from "@/lib/api/fetchJSON";
 /* =======================
    Component
 ======================= */
@@ -28,7 +17,7 @@ export function ProjectChatGPTPageClient({
   projectId: string;
 }) {
   const [mainTab, setMainTab] = useState<
-    "prompt_pack" | "regenerate" | "script_qa"
+    "prompt_pack" | "regenerate" | "script_qa" | "script_refine"
   >("prompt_pack");
 
   const [parts, setParts] = useState<PromptPackPart[]>([]);
@@ -47,11 +36,9 @@ export function ProjectChatGPTPageClient({
   ======================= */
 
   async function loadPromptPack() {
-    console.log('project')
     const p = await fetchJSON<any>(
       `/api/projects/${projectId}`
     );
-    console.log('project', p)
     setProject(p);
     const partsData = p.prompt_pack_json?.parts ?? [];
     setParts(partsData);
@@ -133,6 +120,17 @@ export function ProjectChatGPTPageClient({
         >
           Script QA
         </button>
+        <button
+          className={`btn btn-sm ${mainTab === "script_refine"
+              ? "btn-primary"
+              : "btn-outline-primary"
+            }`}
+          disabled={!hasPromptPackData}
+          onClick={() => setMainTab("script_refine")}
+        >
+          Refine Content
+        </button>
+        
       </div>
 
       <div className="card">
@@ -169,12 +167,20 @@ export function ProjectChatGPTPageClient({
               projectId={projectId}
               parts={parts}
             />
-          ) : (
+          ) : mainTab === "script_qa" ? (
             <ScriptQATab
               projectId={projectId}
               project={project}
               parts={parts as any}
             />
+          ) : mainTab === "script_refine" ? (
+            <>
+              <RefinePromptTab
+              project={project}
+            />
+            </>
+          ) : (
+            <></>
           )}
         </div>
       </div>

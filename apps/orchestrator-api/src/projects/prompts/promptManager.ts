@@ -1,11 +1,13 @@
 // apps/orchestrator-api/src/projects/prompts/promptManager.ts
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import {  BadRequestException } from "@nestjs/common";
+import { BadRequestException } from "@nestjs/common";
 import { PromptStep, PromptStatus } from "../types";
-import { exists, readIfExists, ensureDir } from "../utils/fs";
-import { safeProjectId, promptFilePath, projectRootDir, promptProjectFileContent } from "../utils/paths";
-import { buildMetadataGeneratePrompt, buildScriptQAPrompt, buildScriptRefinePrompt } from "./promptBuilders";
+import { exists, ensureDir } from "../utils/fs";
+import { safeProjectId, promptFilePath, projectRootDir } from "../utils/paths";
+import { buildScriptQAPrompt } from "./promptBuilders";
+import { buildMetadataGeneratePrompt } from "./buildMetadataGeneratePrompt";
+import { buildScriptRefinePrompt } from "./buildScriptRefinePrompt";
 
 export async function getPromptStatus(projectId: string) {
   safeProjectId(projectId);
@@ -65,58 +67,23 @@ export async function getPromptContent(projectId: string, step?: string) {
 
   const s: PromptStep =
     step === "script_qa" ? "script_qa" :
-    step === "script_refine" ? "script_refine" :
-    "prompt_generate_prompt_content";
+      step === "script_refine" ? "script_refine" :
+        "prompt_generate_prompt_content";
 
   // const p = promptFilePath(projectId, s);
   let text = '';
   if (s === "prompt_generate_prompt_content") {
-     text = await buildMetadataGeneratePrompt(projectId);
+    text = await buildMetadataGeneratePrompt(projectId);
   }
   if (s === "script_qa") {
-    const built = await buildScriptQAPrompt(projectId);
-    return { ok: true, step: s, content: built.prompt };
-  }
-  if (!text) throw new BadRequestException(`Prompt file not found for step: ${s}`);
-
-  return { ok: true, step: s, content: text };
-}
-
-export async function ensurePrompt(projectId: string, step?: string) {
-  safeProjectId(projectId);
-
-  const s: PromptStep =
-    step === "script_qa" ? "script_qa" :
-    step === "script_refine" ? "script_refine" :
-    "prompt_generate_prompt_content";
-
-  const p = promptFilePath(projectId, s);
-  await ensureDir(path.dirname(p));
-  if (await exists(p)) return { ok: true, step: s, enabled: true, created: false };
-
-  if (s === "prompt_generate_prompt_content") {
-    const prompt = await buildMetadataGeneratePrompt(projectId);
-    await fs.writeFile(p, prompt, "utf8"); 
-    return { ok: true, step: s, enabled: true, created: true };
-  }
-
-  if (s === "script_qa") {
-    const built = await buildScriptQAPrompt(projectId);
-    if (!built.ok) {
-      return { ok: true, step: s, enabled: false, created: false, reason: `Missing prerequisites: ` };
-    }
-    await fs.writeFile(p, built.prompt, "utf8");
-    return { ok: true, step: s, enabled: true, created: true };
+    text = await buildScriptQAPrompt(projectId);
   }
 
   if (s === "script_refine") {
-    const built = await buildScriptRefinePrompt(projectId);
-    if (!built.ok) {
-      return { ok: true, step: s, enabled: false, created: false, reason: `Missing prerequisites: ${built.missing.join(", ")}` };
-    }
-    await fs.writeFile(p, built.prompt, "utf8");
-    return { ok: true, step: s, enabled: true, created: true };
+    text = await buildScriptRefinePrompt(projectId);
   }
 
-  return { ok: false, error: `Unsupported step: ${s}` };
+  if (!text) throw new BadRequestException(`Prompt file not found for step: ${s}`);
+
+  return { ok: true, step: s, content: text };
 }

@@ -100,11 +100,6 @@ export class ProjectsController {
     return this.projects.getPromptContent(id, step);
   }
 
-  @Post(":id/prompts/ensure")
-  ensurePrompt(@Param("id") id: string, @Query("step") step?: string) {
-    return this.projects.ensurePrompt(id, step);
-  }
-
   @Post(":id/all-script")
   updateAllScript(@Param("id") id: string, @Body() body: any) {
     // body kỳ vọng là object JSON (đã parse bởi Nest)
@@ -140,7 +135,7 @@ export class ProjectsController {
     @Param("projectId") projectId: string,
     @Query("part") part: string
   ) {
-    return this.projects.buildRegeneratePrompt(
+    return this.projects.buildServiceRegeneratePrompt(
       projectId,
       Number(part)
     );
