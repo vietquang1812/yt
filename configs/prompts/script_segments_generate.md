@@ -36,6 +36,7 @@ SEGMENT RULES:
 - Audience: English-speaking market
 - Prompts must be usable for AI image/video generation tools
 - add text `clean background, no text, no logos` on image_prompt, video_prompt
+- Translate video_prompt and image_prompt into Vietnamese, and save them to video_prompt_vi and image_prompt_vi.
 
 Return ONLY valid JSON in this schema:
 
@@ -55,6 +56,8 @@ Return ONLY valid JSON in this schema:
       "emotion": "",
       "video_prompt": "",
       "image_prompt": "",
+      "video_prompt_vi": "",
+      "image_prompt_vi": "",
       "speak_text": "",
       "visual_notes": ""
     }

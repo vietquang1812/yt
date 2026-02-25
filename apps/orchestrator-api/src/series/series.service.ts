@@ -4,7 +4,7 @@ import { prisma } from "@yt-ai/db";
 @Injectable()
 export class SeriesService {
   list() {
-    return prisma.series.findMany({where: { disabled: false }, orderBy: { createdAt: "desc" } });
+    return prisma.series.findMany({ where: { disabled: false }, orderBy: { createdAt: "desc" } });
   }
 
   async get(id: string) {
@@ -19,7 +19,7 @@ export class SeriesService {
     });
   }
 
-  async update(id: string, dto: { name?: string; bible?: any;disabled?: boolean }) {
+  async update(id: string, dto: { name?: string; bible?: any; disabled?: boolean }) {
     // đảm bảo exists
     const s = await prisma.series.findUnique({ where: { id } });
     if (!s) throw new NotFoundException("Series not found");
@@ -29,7 +29,7 @@ export class SeriesService {
       data: {
         name: dto.name ?? s.name,
         bible: dto.bible ?? s.bible,
-        disabled: typeof dto.disabled === "boolean" ? dto.disabled : (s as any).disabled, 
+        disabled: typeof dto.disabled === "boolean" ? dto.disabled : (s as any).disabled,
       },
     });
   }

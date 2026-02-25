@@ -15,6 +15,29 @@ import * as promptManager from "./prompts/promptManager";
 import { validatePromptPack } from './validators/promptPack.validator';
 import { updateScriptQaJSON } from "./prompts/updateScriptQaJSON";
 import { buildRegeneratePrompt } from "./prompts/buildPromptRegenerate";
+type Segment = {
+  segment_id: Number;
+  start_time: string;
+  end_time: string;
+  duration_sec: Number;
+  narration: string;
+  speaker: string;
+  style: string;
+  background: string;
+  negative_prompt: string;
+  emotion: string;
+  video_prompt: string;
+  image_prompt: string;
+  video_prompt_vi: string;
+  image_prompt_vi: string;
+  speak_text: string;
+  visual_notes: string;
+}
+
+type Segments = {
+  part: Number;
+  segments: Segment[];
+}
 
 
 @Injectable()
@@ -144,7 +167,6 @@ export class ProjectsService {
     return promptManager.getPromptStatus(projectId);
   }
   async getPromptContent(projectId: string, step?: string, index?: number) {
-    console.log(projectId, step, index)
     try {
       return await promptManager.getPromptContent(projectId, step, index);
     } catch (e: any) {
@@ -175,9 +197,33 @@ export class ProjectsService {
     part: number,
     content: string,
   ) {
-    const project = await prisma.project.findUnique({
-      where: { id: projectId },
-    });
+    try {
+      const data = JSON.parse(content)
+      if (data.part != part) throw new BadRequestException("Part not match");
+
+      const project = await prisma.project.findUnique({
+        where: { id: projectId },
+      });
+      const segments = project?.segments as any ?? [];
+      const index = segments.findIndex((s: Segments) => s.part === part)
+      if (index >= 0) {
+        segments[index] = data
+      } else {
+        segments.push(data)
+      }
+      await prisma.project.update({
+        where: { id: projectId },
+        data: {
+          segments: segments,
+        },
+      });
+
+      return { ok: true };
+
+    } catch (e: any) {
+      throw new NotFoundException(e?.message || "Prompt not found");
+    }
+
   }
 
   async updatePromptPackPartContent(
@@ -216,7 +262,6 @@ export class ProjectsService {
 
 
   async buildServiceRegeneratePrompt(projectId: string, part: number) {
-    console.log(projectId, part)
     const promptText = await buildRegeneratePrompt(projectId, part);
     return {
       ok: true,

@@ -12,12 +12,13 @@ GOALS (STRICT):
 7) No medical/legal instructions; keep it as personal reflection/storytelling.
 8) Non-repetitive: no obvious repeated paragraphs/ideas between parts.
 9) Style: should feel human, emotional, first-person; not an informational compilation.
+10) Memory Extraction: You must analyze the script to extract its core narrative summary, any unresolved threads (open_loops), references to earlier elements (callbacks), and recurring symbolic elements (motifs). This will populate the "memory" section for series continuity.
 
 INPUT:
 - Topic: {{topic}}
 - Angle: {{angle}}
 - Language: English
-- Target: 3000–5000 words, max 6 parts
+- Target: 3000–6000 words, max 8 parts
 - Script text (full):
 {{script_text}}
 
@@ -49,6 +50,27 @@ Return ONLY valid JSON in this exact schema:
     "no_graphic_violence": true,
     "no_explicit_sexual_content": true,
     "no_repetition": true
+  },
+  "memory": {
+    "summary": "Provide a concise summary of the script's core narrative and emotional journey.",
+    "open_loops": [
+      {
+        "loop": "Name of the unresolved thread or question left for the audience",
+        "description": "Brief explanation of what was left open"
+      }
+    ],
+    "callbacks": [
+      {
+        "target": "The specific element/idea being referenced",
+        "context": "How it was used or called back to in the script"
+      }
+    ],
+    "motifs": [
+      {
+        "motif": "The recurring symbol, object, or phrase",
+        "symbolism": "What it represents in the context of the story"
+      }
+    ]
   }
 }
 

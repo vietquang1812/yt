@@ -108,7 +108,7 @@ model Project {
   artifacts              Artifact[]
   jobs                   Job[]
   analytics              Analytics[]
-  
+
   qa_json                Json?
   segments               Json?
   prompt_pack_json       Json?

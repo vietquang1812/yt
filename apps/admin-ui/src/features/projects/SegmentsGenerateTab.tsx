@@ -17,7 +17,7 @@ export function SegmentsGenerateTab({
   onAction: Function;
 }) {
   const [partPrompt, setPartPrompt] = useState("");
-  const [partContent, setPartContent] = useState("");
+  const [partSegment, setPartSegment] = useState("");
   const [loadingPrompt, setLoadingPrompt] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copiedPrompt, setCopiedPrompt] = useState(false);
@@ -27,52 +27,53 @@ export function SegmentsGenerateTab({
   /* =======================
      Effects
   ======================= */
-    async function getPromptSegmentPart(part: number) {
-        setIndex(part)
-        try {
-        const p = project.prompt_pack_json.parts.find((p: PromptPackPart) => p.part === part )
+  async function getPromptSegmentPart(part: number) {
+    setIndex(part)
+    try {
+      const p = project.prompt_pack_json.parts.find((p: PromptPackPart) => p.part === part)
 
-        const res = await fetchJSON<{ ok: true; content: string }>(
-          `/api/projects/${project.id}/prompts/content?step=script_segments_generate&index=${p.part}`
-        );
-        setPartPrompt(res.content);
-
-        const partJSON = {
-          "part": p?.part,
-          "role": p?.role,
-          "word_count": p?.word_count,
-          "content": p?.content,
-        }
-        setPartContent(JSON.stringify(partJSON, null, 2) ?? "");
-      } catch (e: any) {
-        setError(e.message);
-      } finally {
-        setLoadingPrompt(false);
+      const res = await fetchJSON<{ ok: true; content: string }>(
+        `/api/projects/${project.id}/prompts/content?step=script_segments_generate&index=${p.part}`
+      );
+      setPartPrompt(res.content);
+      const segment = project.segments?.find((s: any) => s.part === part)
+      if (segment != null) {
+        setPartSegment(JSON.stringify(segment, null, 2) ?? "");
+      } else {
+        setPartSegment('')
       }
+
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoadingPrompt(false);
     }
+  }
 
   // load prompt when part changes
   useEffect(() => {
     (async () => {
+        console.log(project)
+
       setLoadingPrompt(true);
       setError(null);
       getPromptSegmentPart(1)
     })();
   }, []);
 
-  async function savePartContent() {
+  async function savePartSegment() {
 
     await fetchJSON(
       `/api/projects/${project.id}/segments/parts/${index}`,
       {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: partContent,
+        body: JSON.stringify({content: partSegment}),
       }
     );
     onAction();
-    alert(`Part ${index} content updated`);
-    
+    alert(`Part ${index} Segment updated`);
+
   }
 
   /* =======================
@@ -95,11 +96,16 @@ export function SegmentsGenerateTab({
   return (
     <>
       {/* Part tabs */}
+      <div>
+        {error && (
+          <div className="alert alert-danger mt-3">{error}</div>
+        )}
+      </div>
       <div className="d-flex gap-2 mb-3">
         {project.prompt_pack_json.parts.map((p: PromptPackPart) => (
           <button
             key={p.part}
-            className={`btn btn-sm ${p.part === index 
+            className={`btn btn-sm ${p.part === index
               ? "btn-primary"
               : "btn-outline-primary"
               }`}
@@ -114,12 +120,12 @@ export function SegmentsGenerateTab({
         <div>Loading prompt…</div>
       ) : (
         <>
-          <div className="fw-bold mb-1">Generated Content</div>
+          <div className="fw-bold mb-1">Generated Segments</div>
           <button
             className="btn btn-success mt-3 me-2"
-            onClick={savePartContent}
+            onClick={savePartSegment}
           >
-            Save Content
+            Save Segments
           </button>
           <button
             className="btn  btn-outline-secondary  mt-3  "
@@ -131,8 +137,8 @@ export function SegmentsGenerateTab({
           <textarea
             className="form-control mt-2"
             style={{ minHeight: 300 }}
-            value={partContent}
-            onChange={(e) => setPartContent(e.target.value)}
+            value={partSegment}
+            onChange={(e) => setPartSegment(e.target.value)}
           />
 
 
@@ -146,9 +152,7 @@ export function SegmentsGenerateTab({
         </>
       )}
 
-      {error && (
-        <div className="alert alert-danger mt-3">{error}</div>
-      )}
+
     </>
   );
 }
