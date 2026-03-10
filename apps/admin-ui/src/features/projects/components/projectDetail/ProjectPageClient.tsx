@@ -1,9 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
-import { HeaderComponent } from "./components/HeaderComponent";
+import { HeaderComponent } from "../HeaderComponent";
 import { fetchJSON } from "@/lib/api/fetchJSON";
-import { BodyComponent } from "./components/BodyComponent";
-import { NextIdeaComponent } from "./components/NextIdeaComponent";
+import { NextIdeaComponent } from "./NextIdeaComponent";
+import { BodyComponent } from "./BodyComponent";
 
 export function ProjectPageClient({ projectId }: { projectId: string }) {
 

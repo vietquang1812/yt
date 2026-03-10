@@ -4,6 +4,7 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { renderTemplate } from "../utils/template";
 import { toChatGPTFormat } from "../utils/promptFormat";
+import { loadSeriesContext } from "./seriesContext";
 
 export async function buildMetadataGeneratePrompt(projectId: string) {
   const cfgDir = resolveConfigDir();
@@ -24,12 +25,13 @@ export async function buildMetadataGeneratePrompt(projectId: string) {
   const personaYaml = await fs.readFile(path.join(cfgDir, "persona.yaml"), "utf8");
   const styleRulesYaml = await fs.readFile(path.join(cfgDir, "style_rules.yaml"), "utf8");
   const tmpl = await fs.readFile(path.join(cfgDir, "prompts", "prompt_generate_prompt_content.md"), "utf8");
-
+  const ctx = await loadSeriesContext(projectId);
   const user = renderTemplate(tmpl, {
     topic: project.topic || "Untitled topic",
     angle: project.pillar || "calm psychological reframe",
     length_chars: 0,
     persona_yaml: personaYaml,
+    series_list: ctx.list.map(s => s.name).join('\n'),
     style_rules_yaml: styleRulesYaml,
     series_bible_json: JSON.stringify(series?.bible ?? {}, null, 2),
     series_memory_json: JSON.stringify(series?.memory?.memory ?? {}, null, 2),

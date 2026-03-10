@@ -55,6 +55,9 @@ SERIES BIBLE (JSON):
 SERIES MEMORY (JSON):
 {{series_memory_json}}
 
+SERIES EXIST
+{{series_list}}
+
 CONTINUITY MODE:
 {{continuity_mode}}
 

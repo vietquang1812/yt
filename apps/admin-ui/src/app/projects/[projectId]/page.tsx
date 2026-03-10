@@ -1,6 +1,6 @@
 import { AppShell } from "@/components/AppShell";
 import { getProjectId } from "@/features/projects/getProjectId";
-import { ProjectPageClient } from "@/features/projects/ProjectPageClient";
+import { ProjectPageClient } from "@/features/projects/components/projectDetail/ProjectPageClient";
 
 export default async function ProjectPage(props: { params: Promise<{ projectId: string }> }) {
   const projectId = await getProjectId(props);

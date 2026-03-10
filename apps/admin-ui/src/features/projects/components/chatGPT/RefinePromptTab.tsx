@@ -1,6 +1,6 @@
 import { fetchJSON } from "@/lib/api/fetchJSON";
 import { useEffect, useState } from "react";
-import { PromptPackPart } from "./types";
+import { PromptPackPart } from "../../types";
 
 export function RefinePromptTab({
     project,

@@ -17,13 +17,13 @@ export async function buildSegmentsGeneratePrompt(projectId: string, index?: num
     });
     if (!project) throw new Error("Project not found");
 
-    const series = project.seriesId
-        ? await prisma.series.findUnique({
-            where: { id: project.seriesId },
-            include: { memory: true },
-        })
-        : null;
-
+    // const series = project.seriesId
+    //     ? await prisma.series.findUnique({
+    //         where: { id: project.seriesId },
+    //         include: { memory: true },
+    //     })
+    //     : null;
+    
     const personaYaml = await fs.readFile(path.join(cfgDir, "persona.yaml"), "utf8");
     const styleRulesYaml = await fs.readFile(path.join(cfgDir, "style_rules.yaml"), "utf8");
     const tmpl = await fs.readFile(path.join(cfgDir, "prompts", "script_segments_generate.md"), "utf8");
@@ -34,7 +34,7 @@ export async function buildSegmentsGeneratePrompt(projectId: string, index?: num
         throw new BadRequestException("Prompt pack not found");
     }
 
-    const part =  pack.parts.find(x => x.part === index)
+    const part = pack.parts.find(x => x.part === index)
     const scriptText = part?.content
     const partRole = part?.role
 

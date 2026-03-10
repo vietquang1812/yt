@@ -8,17 +8,20 @@ export async function loadSeriesContext(projectId: string) {
   });
   if (!project) throw new Error("Project not found");
 
-  const series = project.seriesId
-    ? await prisma.series.findUnique({
-        where: { id: project.seriesId },
-        include: { memory: true },
-      })
-    : null;
-
+  // const series = project.seriesId
+  //   ? await prisma.series.findUnique({
+  //       where: { id: project.seriesId },
+  //       include: { memory: true },
+  //     })
+  //   : null;
+  const list = await prisma.series.findMany({ where: { disabled: false }, include: { memory: true }, orderBy: { createdAt: "desc" } });
+  const series = list.find(s => s.id === project.seriesId)
+  
   return {
     project,
     continuityMode: project.continuityMode || "light",
     seriesBible: series?.bible ?? {},
     seriesMemory: series?.memory?.memory ?? {},
+    list
   };
 }

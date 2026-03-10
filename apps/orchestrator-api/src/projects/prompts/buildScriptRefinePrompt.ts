@@ -38,6 +38,7 @@ export async function buildScriptRefinePrompt(projectId: string) {
         qa_report_json: qaReportText,
         persona_yaml: personaYaml,
         style_rules_yaml: styleRulesYaml,
+
         series_bible_json: JSON.stringify(ctx.seriesBible ?? {}, null, 2),
         series_memory_json: JSON.stringify(ctx.seriesMemory ?? {}, null, 2),
         continuity_mode: ctx.continuityMode,

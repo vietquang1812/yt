@@ -48,4 +48,17 @@ export class ArtifactStorage {
       return null;
     }
   }
+
+  async getAssets(reqPath: string): Promise<string | null> {
+    const filepath = path.join(this.baseDir, reqPath);
+    return await fs.readFile(filepath, "utf8");
+  }
+
+   getFullPath(reqPath:string) {
+    const fileName = path.join( this.baseDir, reqPath)
+
+    return path.resolve(fileName);
+  }
+
+  
 }

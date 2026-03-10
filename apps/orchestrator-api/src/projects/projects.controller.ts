@@ -1,8 +1,7 @@
-import { Body, Controller, Get, Param, Post, Put } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Put, Query } from "@nestjs/common";
 import { Inject, forwardRef } from "@nestjs/common";
 import { ProjectsService } from "./projects.service";
 import { PipelineService } from "../pipeline/pipeline.service";
-import { Query } from "@nestjs/common";
 import { updateAllScriptJson } from "./prompts/updateAllScriptJson";
 import { UpdatePromptPackDto } from "./dto/updatePromptPack.dto";
 type CreateProjectDto = {

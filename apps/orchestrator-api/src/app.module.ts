@@ -5,8 +5,9 @@ import { ProjectsModule } from "./projects/projects.module";
 import { PipelineModule } from "./pipeline/pipeline.module";
 import { HealthModule } from "./health/health.module";
 import { SeriesModule } from "./series/series.module";
+import { AssetsModule } from "./assets/assets.module";
 
 @Module({
-  imports: [PrismaModule, QueueModule, ProjectsModule, PipelineModule, HealthModule, SeriesModule]
+  imports: [PrismaModule, QueueModule, ProjectsModule, PipelineModule, HealthModule, SeriesModule, AssetsModule]
 })
 export class AppModule {}
