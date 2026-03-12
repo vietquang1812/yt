@@ -7,7 +7,7 @@ import type {
 } from "./types";
 
 // list
-export async function getProjects() {
+export async function getProjects(channelId: string) {
   const res = await apiFetch<ProjectDto[] | { items?: ProjectDto[] }>("/api/projects");
   return Array.isArray(res) ? res : (res.items ?? []);
 }

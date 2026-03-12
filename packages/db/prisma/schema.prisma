@@ -84,26 +84,56 @@ model SeriesMemory {
   updatedAt DateTime @updatedAt
 }
 
+model Channel {
+  id           String  @id @default(uuid())
+  name         String
+  image        String
+  character    String
+  persona      String
+  pipeline     String
+  style_rules  String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projects Project[]
+
+  channelPrompts ChannelPrompt[]
+}
+
+model ChannelPrompt {
+  id                     String  @id @default(uuid())
+  name                   String
+  prompt                 String
+
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  channelId              String?
+  channels               Channel? @relation(fields: [channelId], references: [id], onDelete: SetNull)
+
+}
+
 model Project {
-  id              String  @id @default(uuid())
-  topic           String
-  language        String  @default("en")
-  durationMinutes Int     @default(6)
-  format          String  @default("youtube_long")
-  tone            String?
-  pillar          String?
+  id                    String  @id @default(uuid())
+  topic                 String
+  language              String  @default("en")
+  durationMinutes       Int     @default(6)
+  format                String  @default("youtube_long")
+  tone                  String?
+  pillar                String?
 
   // NEW: link to Series
-  seriesId String?
-  series   Series? @relation(fields: [seriesId], references: [id], onDelete: SetNull)
+  seriesId              String?
+  series                Series? @relation(fields: [seriesId], references: [id], onDelete: SetNull)
 
   // NEW: continuity control
   // "none" | "light" | "occasionally_strong"
-  continuityMode String @default("light")
+  continuityMode         String @default("light")
 
-  status    ProjectStatus @default(IDEA_SELECTED)
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  status                 ProjectStatus @default(IDEA_SELECTED)
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
 
   artifacts              Artifact[]
   jobs                   Job[]
@@ -115,7 +145,10 @@ model Project {
   prompt_pack_version    Int         @default(1)
   prompt_pack_updated_at DateTime?
 
-  @@index([seriesId])
+  channelId              String?
+  channels               Channel? @relation(fields: [channelId], references: [id], onDelete: SetNull)
+
+  @@index([seriesId, channelId])
 }
 
 model Artifact {

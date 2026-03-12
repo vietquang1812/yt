@@ -21,8 +21,11 @@ export async function apiFetch<T>(
   }
 
   const headers = new Headers(init.headers);
-  if (!headers.has("Content-Type") && init.body) headers.set("Content-Type", "application/json");
-
+  if (!headers.has("Content-Type") && init.body) {
+    if (!(init.body instanceof FormData)) {
+      headers.set("Content-Type", "application/json");
+    }
+  }
   const res = await fetch(url, { ...init, headers, cache: "no-store" });
   const data = await parseJsonSafe(res);
 

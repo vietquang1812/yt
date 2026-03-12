@@ -1,12 +1,12 @@
-import { proxyToBullBoard } from "@/lib/bff/proxy";
+import { proxyToOrchestrator } from "@/lib/bff/proxyToOrchestrator";
 
 export async function GET() {
-  return proxyToBullBoard("/admin/api/projects");
+  return proxyToOrchestrator("/projects");
 }
 
 export async function POST(req: Request) {
   const bodyText = await req.text();
-  return proxyToBullBoard("/admin/api/projects", {
+  return proxyToOrchestrator("/projects", {
     method: "POST",
     bodyText,
     contentType: "application/json",

@@ -7,7 +7,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <aside className="col-12 col-md-3 col-lg-2 border-end p-0">
           <div className="p-3">
             <div className="fw-bold">Admin UI</div>
-            <div className="text-secondary small">bull-board</div>
           </div>
           <div className="list-group list-group-flush">
             <div className="list-group list-group-flush">

@@ -6,6 +6,7 @@ const BASE = (process.env.BULL_BOARD_BASE_URL ?? "http://localhost:4000").replac
 type ProxyOpts = {
   method?: string;
   bodyText?: string;
+  body?: BodyInit;
   contentType?: string;
 };
 

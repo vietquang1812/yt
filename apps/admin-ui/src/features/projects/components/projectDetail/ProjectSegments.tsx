@@ -6,6 +6,7 @@ import { FaCopy, FaCheck } from "react-icons/fa";
 import { fetchJSON } from '@/lib/api/fetchJSON';
 import { PromptPackPart } from '../../types';
 import { FileUploader } from "react-drag-drop-files";
+import { getImage } from '@/lib/functions/get_image';
 
 export function ProjectSegments({ project }: { project: any }) {
     const [part, setPart] = useState(1);
@@ -24,24 +25,13 @@ export function ProjectSegments({ project }: { project: any }) {
     const handleCloseUpload = () => setShowUpload(false)
     useEffect(() => {
         countIssue()
-        getImage()
+        getImageData()
     }, [project]);
 
-    async function getImage() {
-        const response = await fetch(`/api/assets/images/prompt.png`)
-
-        if (response instanceof Response) {
-            // Bên trong block này, TypeScript tự hiểu 'response' là kiểu Response
-            // const imageBlob = await response.blob();
-            const buffer = await response.arrayBuffer();
-
-            const pngBlob = new Blob([new Uint8Array(buffer)], { type: 'image/png' });
-            console.log("Thành công:", pngBlob);
-            setImg(pngBlob)
-
-            // 2. Cực kỳ quan trọng: Thu hồi URL khi component unmount để tránh rò rỉ bộ nhớ
-        } else {
-            console.error("Dữ liệu trả về không phải là Response");
+    async function getImageData() {
+        const imgData = await getImage(`/api/assets/images/prompt.png`)
+        if (imgData) {
+            setImg(imgData)
         }
     }
 

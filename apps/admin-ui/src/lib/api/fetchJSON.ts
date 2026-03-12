@@ -1,7 +1,21 @@
- export async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
-    const r = await fetch(url, { cache: "no-store", ...init });
-    const text = await r.text();
+export async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
+    const headers = new Headers(init?.headers);
 
+    // KIỂM TRA: Nếu body là FormData, hãy để trình duyệt tự lo Content-Type
+    if (init?.body instanceof FormData) {
+        headers.delete("Content-Type"); 
+    } else if (!headers.has("Content-Type")) {
+        // Chỉ mặc định là JSON nếu không phải gửi file
+        headers.set("Content-Type", "application/json");
+    }
+
+    const r = await fetch(url, { 
+        cache: "no-store", 
+        ...init, 
+        headers // Sử dụng headers đã xử lý
+    });
+    console.log('init?.headers')
+    const text = await r.text();
     let data: any = null;
     try {
         data = text ? JSON.parse(text) : null;
