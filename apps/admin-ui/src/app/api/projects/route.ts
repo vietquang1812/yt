@@ -1,7 +1,10 @@
 import { proxyToOrchestrator } from "@/lib/bff/proxyToOrchestrator";
+import { NextRequest } from "next/server";
 
-export async function GET() {
-  return proxyToOrchestrator("/projects");
+export async function GET(req: NextRequest) {
+  const channelId = req.nextUrl.searchParams.get("channelId") ?? "";
+  console.log(channelId)
+  return proxyToOrchestrator(`/projects?channelId=${channelId}`);
 }
 
 export async function POST(req: Request) {

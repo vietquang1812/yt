@@ -77,46 +77,41 @@ export function ProjectSegments({ project }: { project: any }) {
         countIssue()
         setReset(!reset)
     }
-    function convertToPng(blob: Blob): Promise<Blob> {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            const url = URL.createObjectURL(blob);
 
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext('2d');
-                ctx?.drawImage(img, 0, 0);
-
-                canvas.toBlob((newBlob) => {
-                    URL.revokeObjectURL(url);
-                    if (newBlob) resolve(newBlob);
-                    else reject(new Error('Canvas to Blob failed'));
-                }, 'image/png');
-            };
-
-            img.onerror = () => reject(new Error('Failed to load image into Canvas'));
-            img.src = url;
-        });
-    }
     async function copyPrompt(copyText: string, part: number, segment_id: number) {
-
-        // Chuẩn bị dữ liệu để Copy
-        const data = img ? [
-            new ClipboardItem({
-                'image/png': img,
-                'text/plain': new Blob([copyText], { type: 'text/plain' }),
-            }),
-        ] : [new ClipboardItem({
-            'text/plain': new Blob([copyText], { type: 'text/plain' }),
-        }),
-        ];
-        console.log(data)
-        await navigator.clipboard.write(data);
-        // await navigator.clipboard.writeText(copyText);
+        const text = `
+        ${copyText}
+        - clean background, no text, no logos
+        - 2k resolution, shot on 35mm lens --ar 16:9
+        `
+        navigator.clipboard.writeText(text)
         toggleShowB()
         setTimeout(() => toggleShowB(), 1200);
+        // // Chuẩn bị dữ liệu để Copy
+        // const data = img ? [
+        //     new ClipboardItem({
+        //         'image/png': img,
+        //         'text/plain': new Blob([copyText], { type: 'text/plain' }),
+        //     }),
+        // ] : [new ClipboardItem({
+        //     'text/plain': new Blob([copyText], { type: 'text/plain' }),
+        // }),
+        // ];
+        // await navigator.clipboard.write(data);
+        // // await navigator.clipboard.writeText(copyText);
+        // toggleShowB()
+        // setTimeout(() => toggleShowB(), 1200);
+    }
+
+    async function copyImage() {
+        const imgData = await getImage('/api' + project.channels.image)
+        if (imgData) {
+            const data =[new ClipboardItem({
+                'image/png': imgData,
+            }),]
+
+            await navigator.clipboard.write(data);
+        }
     }
 
     async function handleChangeFile() {
@@ -169,7 +164,16 @@ export function ProjectSegments({ project }: { project: any }) {
                                     </Button>
 
                                 ))}
-
+                                <div className='d-flex align-items-center'>
+                                    <img src={'/api/' + project.channels.image} alt="" className='d-block w-50 mt-4' />
+                                    <Button
+                                        className='ms-2'
+                                        onClick={() => copyImage()}
+                                        variant={"link"}
+                                    >
+                                        <FaCopy />
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                         <div className='col-9'>

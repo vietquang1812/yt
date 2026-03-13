@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { SeriesDto } from "@/features/series/types";
 import { getSeries } from "@/features/series/api";
 import { refresh } from "next/cache";
+import Link from "next/link";
 
 export function ModalFormProject(
     { project, handleClose, edit, show, channelId }:
@@ -31,10 +32,9 @@ export function ModalFormProject(
         refresh()
     }, [])
 
-    async function refresh() {
+    async function refresh() { 
         const all = await getSeries()
         setAllSeries(all)
-        console.log(all)
     }
     async function saveChannel() {
 
@@ -86,15 +86,15 @@ export function ModalFormProject(
                                         onChange={(e) => setSeriesId(e.target.value)}
                                     >
                                         <option value="">(none)</option>
-                                        {/* {allSeries.map((s) => (
+                                        {allSeries.map((s) => (
                                             <option key={s.id} value={s.id}>
                                                 {s.name}
                                             </option>
-                                        ))} */}
+                                        ))}
                                     </select>
-                                    <button className="btn btn-outline-light" type="button" onClick={() => { }}>
+                                    <Link className="btn btn-outline-light" type="button" href={"/series"} >
                                         Create series
-                                    </button>
+                                    </Link>
                                 </div>
                                 <div className="text-secondary small mt-1">
                                     If set, scripts will follow Series Bible + memory for continuity.

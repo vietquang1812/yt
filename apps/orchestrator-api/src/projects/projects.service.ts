@@ -42,10 +42,28 @@ type Segments = {
 
 @Injectable()
 export class ProjectsService {
-  async list() {
+  async list(channelId: string) {
     return prisma.project.findMany({
+      where: {
+        channelId: {
+          contains: channelId,
+        },
+      },
       orderBy: { createdAt: "desc" },
-      select: { id: true, topic: true, status: true, createdAt: true },
+      select: {
+        id: true,
+        topic: true,
+        status: true,
+        createdAt: true,
+        channelId: true,
+        language: true,
+        durationMinutes: true,
+        format: true,
+        tone: true,
+        pillar: true,
+        series: true,
+        continuityMode: true,
+      },
     });
   }
 
@@ -76,6 +94,7 @@ export class ProjectsService {
 
     return prisma.project.create({
       data: {
+        channelId: dto.channelId,
         topic: dto.topic.trim(),
         language: dto.language ?? "en",
         durationMinutes: dto.durationMinutes ?? 6,
@@ -92,7 +111,13 @@ export class ProjectsService {
   async get(id: string) {
     const p = await prisma.project.findUnique({
       where: { id },
-      include: { artifacts: true, jobs: true, analytics: true, series: true },
+      include: {
+        channels: true,        
+        series: true,
+        artifacts: true, 
+        jobs: true, 
+        analytics: true,  
+      },
     });
     if (!p) throw new NotFoundException("Project not found");
     return p;

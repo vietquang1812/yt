@@ -5,6 +5,7 @@ import { PipelineService } from "../pipeline/pipeline.service";
 import { updateAllScriptJson } from "./prompts/updateAllScriptJson";
 import { UpdatePromptPackDto } from "./dto/updatePromptPack.dto";
 type CreateProjectDto = {
+  channelId: string;
   topic: string;
   language?: string;
   durationMinutes?: number;
@@ -27,8 +28,8 @@ export class ProjectsController {
   ) { }
 
   @Get()
-  list() {
-    return this.projects.list();
+  list(@Query("channelId") channelId: string) {
+    return this.projects.list(channelId);
   }
 
   @Post()
@@ -150,7 +151,6 @@ export class ProjectsController {
     @Param("projectId") projectId: string,
     @Query("part") part: string
   ) {
-    console.log(projectId, part)
     return this.projects.buildServiceRegeneratePrompt(
       projectId,
       Number(part)

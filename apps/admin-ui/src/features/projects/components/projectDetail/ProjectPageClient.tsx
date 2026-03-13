@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { HeaderComponent } from "../HeaderComponent";
+import { HeaderComponent } from "./HeaderComponent";
 import { fetchJSON } from "@/lib/api/fetchJSON";
 import { NextIdeaComponent } from "./NextIdeaComponent";
 import { BodyComponent } from "./BodyComponent";
@@ -13,7 +13,6 @@ export function ProjectPageClient({ projectId }: { projectId: string }) {
         const p = await fetchJSON<any>(
             `/api/projects/${projectId}`
         );
-
         setProject(p);
 
     }

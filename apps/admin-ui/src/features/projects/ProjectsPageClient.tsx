@@ -8,6 +8,8 @@ import { createSeries, getSeries } from "@/features/series/api";
 import type { SeriesDto } from "@/features/series/types";
 import { Button } from "react-bootstrap";
 import { ModalFormProject } from "./components/projects/ModalFormProject";
+import { useChannelStore } from "@/store/channelStorage";
+
 
 type AlertState =
   | { variant: "info" | "success" | "warning" | "danger"; html: string }
@@ -38,6 +40,11 @@ function statusClass(status?: string) {
 
 
 export function ProjectsPageClient({ channelId }: { channelId: string }) {
+  
+  const channelIdStore = useChannelStore((state) => state.channelId);
+
+  console.log(channelIdStore)
+  
   const [alert, setAlert] = useState<AlertState>(null);
   const [open, setOpen] = useState(false)
   const [edit, setEdit] = useState(true)
@@ -65,16 +72,15 @@ export function ProjectsPageClient({ channelId }: { channelId: string }) {
     return [...allProjects]
       .filter((p) => !q || String(p.topic || "").toLowerCase().includes(q))
       .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
-  }, [allProjects, projectSearch]);
+  }, [allProjects, projectSearch, allSeries]);
 
   function clearAlert() {
     setAlert(null);
   }
 
-  function seriesNameById(id?: string) {
-    if (!id) return "";
-    const s = allSeries.find((x) => x.id === id);
-    return s?.name || "";
+  function seriesNameById(project: ProjectDto) {
+    if (!project.series) return "--";
+    return project.series.name || "--";
   }
 
 
@@ -92,16 +98,31 @@ export function ProjectsPageClient({ channelId }: { channelId: string }) {
     } finally {
       setLoadingProjects(false);
     }
+
   }
 
   const handleClose = () => setOpen(false)
 
   // Boot
   useEffect(() => {
+
     (async () => {
       await loadProjects();
+      await loadSeries();
     })();
   }, []);
+
+  async function loadSeries() {
+    const all = await getSeries()
+    setAllSeries(all)
+  }
+
+  async function refresh() {
+    loadProjects();
+    loadSeries();
+  }
+
+
   function openModelChannel(id: string) {
     setOpen(true)
   }
@@ -124,6 +145,7 @@ export function ProjectsPageClient({ channelId }: { channelId: string }) {
           >
             Create
           </Button>
+
         </div>
       </div>
 
@@ -184,7 +206,7 @@ export function ProjectsPageClient({ channelId }: { channelId: string }) {
                       </tr>
                     ) : (
                       filteredProjects.map((p) => {
-                        const seriesLabel = seriesNameById(p.seriesId) || (p.seriesId ? "Series" : "—");
+                        const seriesLabel = seriesNameById(p);
                         return (
                           <tr key={p.id}>
                             <td>
