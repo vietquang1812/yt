@@ -5,7 +5,7 @@ import { BadRequestException } from "@nestjs/common";
 import { PromptStep, PromptStatus } from "../types";
 import { exists, ensureDir } from "../utils/fs";
 import { safeProjectId, promptFilePath, projectRootDir } from "../utils/paths";
-import { buildScriptQAPrompt } from "./promptBuilders";
+import { buildScriptQAPrompt } from "./buildScriptQAPrompt";
 import { buildMetadataGeneratePrompt } from "./buildMetadataGeneratePrompt";
 import { buildScriptRefinePrompt } from "./buildScriptRefinePrompt";
 import { buildSegmentsGeneratePrompt } from "./buildSegmentsGeneratePrompt";
@@ -71,6 +71,8 @@ export async function getPromptStatus(projectId: string) {
 
 export async function getPromptContent(projectId: string, step?: string, index?: number) {
   safeProjectId(projectId);
+
+
   const s: PromptStep =
     step === "script_qa" ? "script_qa" :
       step === "script_refine" ? "script_refine" :

@@ -5,8 +5,8 @@ import { BsArrowUpCircleFill } from "react-icons/bs";
 import { FaCopy, FaCheck } from "react-icons/fa";
 import { fetchJSON } from '@/lib/api/fetchJSON';
 import { PromptPackPart } from '../../types';
-import { FileUploader } from "react-drag-drop-files";
 import { getImage } from '@/lib/functions/get_image';
+import { ModalSaveSegmentContent } from './ModalSaveSegmentContent';
 
 export function ProjectSegments({ project }: { project: any }) {
     const [part, setPart] = useState(1);
@@ -18,9 +18,7 @@ export function ProjectSegments({ project }: { project: any }) {
     const [showB, setShowB] = useState(true);
     const [showFile, setShowFile] = useState(true);
     const [showUpload, setShowUpload] = useState(false);
-    const [base64, setBase64] = useState('');
     const [img, setImg] = useState<Blob>();
-    const fileTypes = ["PNG"];
     const toggleShowB = () => setShowB(!showB);
     const handleCloseUpload = () => setShowUpload(false)
     useEffect(() => {
@@ -104,9 +102,9 @@ export function ProjectSegments({ project }: { project: any }) {
     }
 
     async function copyImage() {
-        const imgData = await getImage('/api' + project.channels.image)
+        const imgData = await getImage('/api' + project.channel.image)
         if (imgData) {
-            const data =[new ClipboardItem({
+            const data = [new ClipboardItem({
                 'image/png': imgData,
             }),]
 
@@ -114,12 +112,16 @@ export function ProjectSegments({ project }: { project: any }) {
         }
     }
 
-    async function handleChangeFile() {
 
-    }
 
     async function saveFileAndAudio() {
 
+    }
+
+    function showModalUpload(part: number, segment_id: number) {
+        setPart(part)
+        setSegmentId(segment_id)
+        setShowUpload(true)
     }
 
 
@@ -137,10 +139,10 @@ export function ProjectSegments({ project }: { project: any }) {
                 >
                     <div className='d-flex d-flex justify-content-between align-item-center'>
                         <h1 className="h4 mt-2 mb-1">{project.topic} <Badge bg={issue === 0 ? "success" : "warning"} className=' rounded rounded-circle'>{issue}</Badge></h1>
-                        <h2 style={{
+                        <div style={{
                             transform: `rotate(${open ? 0 : '180deg'}) `,
                             transition: 'transform ease-in-out .3s', fontSize: 44,
-                        }}><BsArrowUpCircleFill /></h2>
+                        }}><BsArrowUpCircleFill /></div>
 
                     </div>
                 </Button>
@@ -165,7 +167,7 @@ export function ProjectSegments({ project }: { project: any }) {
 
                                 ))}
                                 <div className='d-flex align-items-center'>
-                                    <img src={'/api/' + project.channels.image} alt="" className='d-block w-50 mt-4' />
+                                    <img src={'/api/' + project.channel.image} alt="" className='d-block w-50 mt-4' />
                                     <Button
                                         className='ms-2'
                                         onClick={() => copyImage()}
@@ -191,21 +193,25 @@ export function ProjectSegments({ project }: { project: any }) {
                                             >
                                                 <h5 className='h5'>{p.segment_id}: {p.visual_notes}</h5>
                                             </Button>
-                                            <Form.Check // prettier-ignore
-                                                key={'switch-' + s.part + '-' + p.segment_id}
-                                                type="switch"
-                                                label=""
-                                                checked={p.status}
-                                                onChange={() => updateSegmentStatus(s.part, p.segment_id)}
-                                            />
+                                            <Button
+                                                key={'file_' + s.part + '-' + p.segment_id}
+                                                onClick={() => showModalUpload(s.part, p.segment_id)}
+                                                aria-controls="example-collapse-text"
+                                                aria-expanded={s.part === part && p.segment_id === segement}
+                                                variant={"info"}
+                                                size="sm"
+                                                className=' me-2 text-light'
+                                            >
+                                                Upload
+                                            </Button>
 
                                         </div>
                                         <Collapse in={s.part === part && p.segment_id === segement} key={'collapse-' + s.part + '-' + p.segment_id}>
                                             <div className='p-2'>
                                                 <div className='d-flex align-items-start'>
-                                                    {p.image_prompt_vi}
+                                                    {p.image_prompt}
                                                     <Button
-                                                        onClick={() => copyPrompt(p.image_prompt_vi, s.part, p.segment_id)}
+                                                        onClick={() => copyPrompt(p.image_prompt, s.part, p.segment_id)}
                                                         variant={"link"}
                                                     >
                                                         <FaCopy />
@@ -230,36 +236,8 @@ export function ProjectSegments({ project }: { project: any }) {
                     </div>
                 </Collapse>
             </div>
-            <Modal show={showUpload} onHide={handleCloseUpload} size="lg"
-                aria-labelledby="contained-modal-title-vcenter"
-                centered>
-                <Modal.Header closeButton>
-                    <Modal.Title>Upload File and Audio</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <div className='row'>
-                        <div className='col-6'>
-                            <FileUploader handleChange={handleChangeFile} name="file" types={fileTypes} />
-                        </div>
-                        <div className='col-6'>
-                            <textarea
-                                className="form-control mt-2"
-                                style={{ minHeight: 300 }}
-                                value={base64}
-                                onChange={(e) => setBase64(e.target.value)}
-                            />
-                        </div>
-                    </div>
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={handleCloseUpload}>
-                        Close
-                    </Button>
-                    <Button variant="primary" onClick={saveFileAndAudio}>
-                        Save Changes
-                    </Button>
-                </Modal.Footer>
-            </Modal>
+            <ModalSaveSegmentContent show={showUpload} project={project} part={part} segementId={segmentId} onClose={() => setShowUpload(false)} />
+
         </div >
     )
 }

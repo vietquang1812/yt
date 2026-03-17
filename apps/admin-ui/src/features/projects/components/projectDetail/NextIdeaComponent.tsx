@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { BsArrowUpCircleFill } from "react-icons/bs";
 import { Collapse, Button, Form, Table, Modal } from 'react-bootstrap';
 import { CreateProjectDto } from '../../types';
+import { createProject } from '../../api';
 import { createSeries, getSeries } from '@/features/series/api';
 import { SeriesDto } from '@/features/series/types';
 
@@ -27,7 +28,7 @@ export function NextIdeaComponent({ project, }: {
     async function refresh() {
         setLoading(true);
         try {
-            setSeries(await getSeries());
+            setSeries(await getSeries(project.channel_id));
         } finally {
             setLoading(false);
         }
@@ -37,22 +38,28 @@ export function NextIdeaComponent({ project, }: {
         refresh();
     }, [project])
 
-    function toProject(idea: any) {
-        const seriesId = series.find((s: SeriesDto) => s.name === idea.name)?.id
+    async function toProject(idea: any) {
+        const seriesId = series.find((s: SeriesDto) => s.name === idea.series?.name)?.id
 
         const body: CreateProjectDto = {
             topic: idea.topic,
             pillar: idea.pillar,
             seriesId: seriesId,
             continuityMode: idea.continuity || "light",
+            channelId: project.channel_id,
             language: "en",
             durationMinutes: idea.duration_minutes || 6,
             format: "youtube_long",
             tone: idea.tone,
         };
 
-        idea.exist = true
-        setReset(!reset);
+        try {
+            await createProject(body);
+            idea.exist = true;
+            setReset(!reset);
+        } catch (error) {
+            alert('Failed to create project: ' + error);
+        }
     }
 
     function handleShow(s: any) {

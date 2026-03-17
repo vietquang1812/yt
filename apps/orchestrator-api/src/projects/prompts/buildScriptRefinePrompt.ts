@@ -1,5 +1,4 @@
 import { prisma } from "@yt-ai/db";
-import { readIfExists } from "../utils/fs";
 import { projectRootDir, resolveConfigDir } from "../utils/paths";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
@@ -12,18 +11,37 @@ import { BadRequestException } from "@nestjs/common";
 
 export async function buildScriptRefinePrompt(projectId: string) {
     const cfgDir = resolveConfigDir();
-    const root = projectRootDir(projectId);
-
 
     const missing: string[] = [];
     if (missing.length > 0) return '';
 
-    const tmpl = await fs.readFile(path.join(cfgDir, "prompts", "script_refine.md"), "utf8");
-    const project = await prisma.project.findUnique({ where: { id: projectId } });
-    if (!project) throw new Error(`Project not found: ${projectId}`);
 
-    const personaYaml = await loadConfigText("persona.yaml");
-    const styleRulesYaml = await loadConfigText("style_rules.yaml");
+    const project = await prisma.project.findUnique({
+        where: { id: projectId },
+        include: { series: true },
+    });
+    if (!project) throw new Error("Project not found");
+
+    if (!project.channelId) throw new Error("Project channelId is not set");
+
+    const channel = await prisma.channel.findUnique({
+        where: { id: project.channelId },
+    });
+
+    if (!channel) throw new Error("Channel not found");
+
+
+    const prompts = await prisma.channelPrompt.findMany({
+        where: {
+            channelId: channel.id,
+        }
+    })
+
+    const prompt = prompts.find(p => p.name === "script_refine");
+
+    const tmpl = prompt?.prompt || await fs.readFile(path.join(cfgDir, "prompts", "script_refine.md"), "utf8");
+    const personaYaml = channel.persona || await loadConfigText("persona.yaml");
+    const styleRulesYaml =  channel.style_rules || await loadConfigText("style_rules.yaml");
     const ctx = await loadSeriesContext(projectId);
     const pack = parsePromptPack(project.prompt_pack_json);
     if (!pack?.parts?.length) {

@@ -17,16 +17,32 @@ export async function buildSegmentsGeneratePrompt(projectId: string, index?: num
     });
     if (!project) throw new Error("Project not found");
 
+    if (!project.channelId) throw new Error("Project channelId is not set");
+
+    const channel = await prisma.channel.findUnique({
+        where: { id: project.channelId },
+    });
+
+    if (!channel) throw new Error("Channel not found");
+
+
+    const prompts = await prisma.channelPrompt.findMany({
+        where: {
+            channelId: channel.id,
+        }
+    })
+
+    const prompt = prompts.find(p => p.name === "script_segments_generate");
+
     // const series = project.seriesId
     //     ? await prisma.series.findUnique({
     //         where: { id: project.seriesId },
     //         include: { memory: true },
     //     })
     //     : null;
-    
-    const personaYaml = await fs.readFile(path.join(cfgDir, "persona.yaml"), "utf8");
-    const styleRulesYaml = await fs.readFile(path.join(cfgDir, "style_rules.yaml"), "utf8");
-    const tmpl = await fs.readFile(path.join(cfgDir, "prompts", "script_segments_generate.md"), "utf8");
+    const tmpl = prompt?.prompt || await fs.readFile(path.join(cfgDir, "prompts", "script_segments_generate.md"), "utf8");
+    const personaYaml = channel.persona || await fs.readFile(path.join(cfgDir, "persona.yaml"), "utf8");
+    const styleRulesYaml =  channel.style_rules || await fs.readFile(path.join(cfgDir, "style_rules.yaml"), "utf8");
     const characterYaml = await fs.readFile(path.join(cfgDir, "character.yaml"), "utf8");
 
     const pack = parsePromptPack(project.prompt_pack_json);

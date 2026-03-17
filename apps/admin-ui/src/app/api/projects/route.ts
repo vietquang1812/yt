@@ -3,7 +3,6 @@ import { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
   const channelId = req.nextUrl.searchParams.get("channelId") ?? "";
-  console.log(channelId)
   return proxyToOrchestrator(`/projects?channelId=${channelId}`);
 }
 

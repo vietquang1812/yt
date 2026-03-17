@@ -22,6 +22,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Link className="list-group-item list-group-item-action" href="/series">
                 Series
               </Link>
+              <Link className="list-group-item list-group-item-action" href="/prompts">
+                Prompts
+              </Link>
+              <span></span>
             </div>
 
           </div>

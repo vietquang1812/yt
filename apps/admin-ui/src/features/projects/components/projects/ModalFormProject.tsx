@@ -33,7 +33,7 @@ export function ModalFormProject(
     }, [])
 
     async function refresh() { 
-        const all = await getSeries()
+        const all = await getSeries(project.channelId)
         setAllSeries(all)
     }
     async function saveChannel() {

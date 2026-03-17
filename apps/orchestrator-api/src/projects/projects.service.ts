@@ -112,7 +112,7 @@ export class ProjectsService {
     const p = await prisma.project.findUnique({
       where: { id },
       include: {
-        channels: true,        
+        channel: true,        
         series: true,
         artifacts: true, 
         jobs: true, 

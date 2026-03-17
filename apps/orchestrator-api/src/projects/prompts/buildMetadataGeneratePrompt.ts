@@ -15,6 +15,14 @@ export async function buildMetadataGeneratePrompt(projectId: string) {
   });
   if (!project) throw new Error("Project not found");
 
+  if (!project.channelId) throw new Error("Project channelId is not set");
+  
+  const channel = await prisma.channel.findUnique({
+    where: { id: project.channelId },
+  });
+
+  if (!channel) throw new Error("Channel not found");
+
   const series = project.seriesId
     ? await prisma.series.findUnique({
       where: { id: project.seriesId },
@@ -22,9 +30,18 @@ export async function buildMetadataGeneratePrompt(projectId: string) {
     })
     : null;
 
-  const personaYaml = await fs.readFile(path.join(cfgDir, "persona.yaml"), "utf8");
-  const styleRulesYaml = await fs.readFile(path.join(cfgDir, "style_rules.yaml"), "utf8");
-  const tmpl = await fs.readFile(path.join(cfgDir, "prompts", "prompt_generate_prompt_content.md"), "utf8");
+
+  const prompts = await prisma.channelPrompt.findMany({
+    where: {
+      channelId: channel.id,
+    }
+  })
+
+  const prompt = prompts.find(p => p.name === "prompt_generate_prompt_content");
+
+  const personaYaml = channel.persona || await fs.readFile(path.join(cfgDir, "persona.yaml"), "utf8");
+  const styleRulesYaml = channel.style_rules || await fs.readFile(path.join(cfgDir, "style_rules.yaml"), "utf8");
+  const tmpl = prompt?.prompt || await fs.readFile(path.join(cfgDir, "prompts", "prompt_generate_prompt_content.md"), "utf8");
   const ctx = await loadSeriesContext(projectId);
   const user = renderTemplate(tmpl, {
     topic: project.topic || "Untitled topic",

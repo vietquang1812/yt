@@ -8,7 +8,9 @@ export type CreateProjectDto = {
   tone?: string;
   pillar?: string;
   seriesId?: string;
+  channelId: string;
   series?: any;
+  channel?: any;
   continuityMode?: ContinuityMode;
 };
 

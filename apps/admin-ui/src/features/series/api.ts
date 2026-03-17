@@ -1,8 +1,8 @@
 import { apiFetch } from "@/lib/api/client";
 import type { CreateSeriesDto, SeriesDto, UpdateSeriesDto } from "./types";
 
-export async function getSeries() {
-  const res = await apiFetch<SeriesDto[] | { items?: SeriesDto[] }>("/api/series");
+export async function getSeries(channelId: string) {
+  const res = await apiFetch<SeriesDto[] | { items?: SeriesDto[] }>(`/api/series?channelId=${channelId}`);
   return Array.isArray(res) ? res : (res.items ?? []);
 }
 

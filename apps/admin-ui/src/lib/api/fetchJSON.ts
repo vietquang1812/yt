@@ -14,7 +14,6 @@ export async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> 
         ...init, 
         headers // Sử dụng headers đã xử lý
     });
-    console.log('init?.headers')
     const text = await r.text();
     let data: any = null;
     try {

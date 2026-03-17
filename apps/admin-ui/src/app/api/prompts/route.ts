@@ -1,14 +1,14 @@
 import { proxyToOrchestrator } from "@/lib/bff/proxyToOrchestrator";
-import { NextRequest } from "next/dist/server/web/spec-extension/request";
+import { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
   const channelId = req.nextUrl.searchParams.get("channelId") ?? "";
-  return proxyToOrchestrator(`/series?channelId=${channelId}`);
+  return proxyToOrchestrator(`/prompts?channelId=${channelId}`);
 }
 
 export async function POST(req: Request) {
   const bodyText = await req.text();
-  return proxyToOrchestrator("/series", {
+  return proxyToOrchestrator("/prompts", {
     method: "POST",
     bodyText,
     contentType: "application/json",

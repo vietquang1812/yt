@@ -13,6 +13,22 @@ export async function buildRegeneratePrompt(projectId: string, part: number) {
     if (!project) throw new NotFoundException("Project not found");
     const pack = parsePromptPack(project.prompt_pack_json);
 
+    if (!project.channelId) throw new Error("Project channelId is not set");
+
+    const channel = await prisma.channel.findUnique({
+        where: { id: project.channelId },
+    });
+
+    if (!channel) throw new Error("Channel not found");
+
+    const prompts = await prisma.channelPrompt.findMany({
+        where: {
+            channelId: channel.id,
+        }
+    })
+
+    const prompt = prompts.find(p => p.name === "prompt_generate_content");
+
     if (!pack?.parts?.length) {
         throw new BadRequestException("Prompt pack not found");
     }
@@ -23,9 +39,10 @@ export async function buildRegeneratePrompt(projectId: string, part: number) {
     }
 
     // Load prompt template
-    const template = await loadPrompt("prompt_generate_content");
-    const personaYaml = await loadConfigText("persona.yaml");
-    const styleRulesYaml = await loadConfigText("style_rules.yaml");
+    const template = prompt?.prompt || await loadPrompt("prompt_generate_content");
+    const personaYaml =channel.persona || await loadConfigText("persona.yaml");
+    const styleRulesYaml = channel.style_rules || await loadConfigText("style_rules.yaml");
+
     const ctx = await loadSeriesContext(projectId);
     let promptText = "";
     const user = renderTemplate(template, {

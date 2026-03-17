@@ -5,3 +5,5 @@ dist
 storage/projects/*
 !.keep
 .DS_Store
+.github
+.idea

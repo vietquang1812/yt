@@ -4,10 +4,10 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { RegeneratePromptPackTab } from "./RegeneratePromptPackTab";
 import { ScriptQATab } from "./ScriptQATab";
-import { PromptPackPart } from './types'
 import { RefinePromptTab } from "./RefinePromptTab";
 import { fetchJSON } from "@/lib/api/fetchJSON";
 import { SegmentsGenerateTab } from "./SegmentsGenerateTab";
+import { PromptPackPart } from "../../types";
 /* =======================
    Component
 ======================= */

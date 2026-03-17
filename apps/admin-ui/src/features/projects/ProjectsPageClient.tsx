@@ -41,10 +41,6 @@ function statusClass(status?: string) {
 
 export function ProjectsPageClient({ channelId }: { channelId: string }) {
   
-  const channelIdStore = useChannelStore((state) => state.channelId);
-
-  console.log(channelIdStore)
-  
   const [alert, setAlert] = useState<AlertState>(null);
   const [open, setOpen] = useState(false)
   const [edit, setEdit] = useState(true)
@@ -53,6 +49,7 @@ export function ProjectsPageClient({ channelId }: { channelId: string }) {
     topic: '',
     language: '',
     durationMinutes: 6,
+    channelId: channelId,
     format: '',
     tone: '',
     pillar: '',
@@ -107,13 +104,14 @@ export function ProjectsPageClient({ channelId }: { channelId: string }) {
   useEffect(() => {
 
     (async () => {
+      useChannelStore.setState({ channelId: channelId })
       await loadProjects();
       await loadSeries();
     })();
   }, []);
 
   async function loadSeries() {
-    const all = await getSeries()
+    const all = await getSeries(channelId)
     setAllSeries(all)
   }
 

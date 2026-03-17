@@ -4,7 +4,7 @@ import { HeaderComponent } from "./HeaderComponent";
 import { fetchJSON } from "@/lib/api/fetchJSON";
 import { NextIdeaComponent } from "./NextIdeaComponent";
 import { BodyComponent } from "./BodyComponent";
-
+import { useChannelStore } from "@/store/channelStorage";
 export function ProjectPageClient({ projectId }: { projectId: string }) {
 
     const [project, setProject] = useState({});
@@ -14,7 +14,8 @@ export function ProjectPageClient({ projectId }: { projectId: string }) {
             `/api/projects/${projectId}`
         );
         setProject(p);
-
+        console.log(p)
+        useChannelStore.setState({ channelId: p.channelId }) 
     }
 
     useEffect(() => {
