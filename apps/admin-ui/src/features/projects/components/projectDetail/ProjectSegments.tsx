@@ -77,26 +77,52 @@ export function ProjectSegments({ project }: { project: any }) {
     }
 
     async function copyPrompt(copyText: string, part: number, segment_id: number) {
-        const text = `
-        ${copyText}
-        - clean background, no text, no logos
-        - 2k resolution, shot on 35mm lens --ar 16:9
-        `
+        // const text = `
+        // ${copyText}
+        // - clean background, no text, no logos
+        // - 2k resolution, shot on 35mm lens --ar 16:9
+        // `
+        const text = copyText
         navigator.clipboard.writeText(text)
         toggleShowB()
         setTimeout(() => toggleShowB(), 1200);
-        // // Chuẩn bị dữ liệu để Copy
-        // const data = img ? [
-        //     new ClipboardItem({
-        //         'image/png': img,
-        //         'text/plain': new Blob([copyText], { type: 'text/plain' }),
-        //     }),
-        // ] : [new ClipboardItem({
-        //     'text/plain': new Blob([copyText], { type: 'text/plain' }),
-        // }),
-        // ];
-        // await navigator.clipboard.write(data);
-        // // await navigator.clipboard.writeText(copyText);
+    }
+
+    async function copyAllPrompt() {
+        let text = ''
+        const voice =  `
+[Voice Persona & Demographics]
+Gender & Age: Male, mid-30s to late 40s.
+Accent: Standard North American (or a very soft, neutralized British accent).
+Voice Type: A rich, warm baritone. The timbre should be deep, grounded, and slightly textured (a very subtle, natural vocal fry at the end of melancholic sentences).
+[Tone & Emotional Arc]
+Core Emotion: Introspective, empathetic, philosophical, and quietly authoritative.
+Vibe: "Late-night radio host" meets "premium documentary narrator." It should sound like a deeply personal confession to a close friend in a quiet room at 2 AM.
+Emotional Progression: Starts slightly exhausted and heavy (reflecting the burden of overthinking), but gradually transitions into a tone of quiet, resolute confidence by the end. Strictly avoid any overly enthusiastic, preachy, or "salesy" inflections.
+[Pacing & Rhythm]
+Speed: Deliberate and unhurried (around 130-140 words per minute, equivalent to a 1.08x base speed).
+Cadence: Conversational but theatrical.
+Pausing: Utilize strategic micro-pauses (0.5s - 1s) after heavy statements or punctuation (e.g., after "I had an unsettling realization."). Let the silence breathe.
+[Sound Design & Delivery Details]
+Mic Technique: High "proximity effect." The voice should sound intimately close to the microphone, capturing subtle breath sounds and mouth clicks to make it feel human, intimate, and raw.
+Articulation: Clear and articulate, but not overly theatrical or stiff. The words should flow naturally with a slight downward inflection at the end of profound statements to give them weight.
+                `
+        project.segments.forEach((s: any) => {
+            s.segments.forEach((p: any) => {
+                text += (p.video_prompt).replaceAll('\n', '; ')  + '\n'
+            })
+        })
+        navigator.clipboard.writeText(text)
+        toggleShowB()
+        setTimeout(() => toggleShowB(), 1200);
+    }
+
+    async function copyAllScripts() {
+        let text = ''
+        project.prompt_pack_json.parts.forEach((p: any) => {
+            text +=  p.content + '\n\n'
+        })
+        navigator.clipboard.writeText(text)
         // toggleShowB()
         // setTimeout(() => toggleShowB(), 1200);
     }
@@ -129,7 +155,8 @@ export function ProjectSegments({ project }: { project: any }) {
     return (
         <div className="card">
             <div className="card-header">
-                <Button
+                <div className='d-flex'>
+                    <Button
                     key={'project-' + project.id}
                     onClick={() => setOpen(!open)}
                     aria-controls="example-collapse-text"
@@ -146,6 +173,21 @@ export function ProjectSegments({ project }: { project: any }) {
 
                     </div>
                 </Button>
+                <Button
+                    className='ms-2'
+                    onClick={() => copyAllPrompt()}
+                    variant={"success"}
+                >
+                    Copy All Prompts
+                </Button>
+                <Button
+                    className='ms-2'
+                    onClick={() => copyAllScripts()}
+                    variant={"info"}
+                >
+                    Copy All Scripts
+                </Button>
+                </div>
 
             </div >
             <div className="card-body">
@@ -154,16 +196,18 @@ export function ProjectSegments({ project }: { project: any }) {
                         <div className="col-3 border-end border-white position-relative">
                             <div className='position-sticky' style={{ top: 40 }}>
                                 {project.prompt_pack_json.parts.map((prompt: PromptPackPart) => (
+
                                     <Button
                                         key={'part-' + prompt.part}
                                         onClick={() => changePart(prompt.part)}
                                         aria-controls="example-collapse-text"
                                         aria-expanded={prompt.part === part}
                                         variant={prompt.part === part ? 'primary' : "outline-primary"}
-                                        className='w-100 text-start mt-3 text-white'
+                                        className='w-100 text-start mt-3 text-white flex-1'
                                     >
                                         {prompt.part}. {prompt.role}
                                     </Button>
+
 
                                 ))}
                                 <div className='d-flex align-items-center'>
@@ -191,7 +235,7 @@ export function ProjectSegments({ project }: { project: any }) {
                                                 variant={"link"}
                                                 className='w-100 text-start p-3 text-decoration-none text-light'
                                             >
-                                                <h5 className='h5'>{p.segment_id}: {p.visual_notes}</h5>
+                                                <h5 className='h5'>{p.segment_id}: {p.narration.substring(0,60)}...</h5>
                                             </Button>
                                             <Button
                                                 key={'file_' + s.part + '-' + p.segment_id}
@@ -209,9 +253,9 @@ export function ProjectSegments({ project }: { project: any }) {
                                         <Collapse in={s.part === part && p.segment_id === segement} key={'collapse-' + s.part + '-' + p.segment_id}>
                                             <div className='p-2'>
                                                 <div className='d-flex align-items-start'>
-                                                    {p.image_prompt}
+                                                    {p.video_prompt}
                                                     <Button
-                                                        onClick={() => copyPrompt(p.image_prompt, s.part, p.segment_id)}
+                                                        onClick={() => copyPrompt(p.video_prompt, s.part, p.segment_id)}
                                                         variant={"link"}
                                                     >
                                                         <FaCopy />

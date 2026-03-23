@@ -66,7 +66,7 @@ export async function buildSegmentsGeneratePrompt(projectId: string, index?: num
         persona_yaml: personaYaml,
         style_rules_yaml: styleRulesYaml,
     });
-
-    const system = `You are an expert AI video prompt creator. Your task is to generate high-quality video generation prompts based on user requests. Always integrate the provided face_lock_phrase to maintain character consistency. Clearly specify camera angles, lighting, motion, and environment. Follow instructions strictly and return exactly the formatted prompts requested.`;
-    return toChatGPTFormat(system, user);
+    return user
+    // const system = `You are an expert AI video prompt creator. Your task is to generate high-quality video generation prompts based on user requests. Always integrate the provided face_lock_phrase to maintain character consistency. Clearly specify camera angles, lighting, motion, and environment. Follow instructions strictly and return exactly the formatted prompts requested.`;
+    // return toChatGPTFormat(system, user);
 }
