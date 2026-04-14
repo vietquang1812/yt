@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { BsArrowUpCircleFill } from "react-icons/bs";
 import { Collapse, Button, Form, Table, Modal } from 'react-bootstrap';
 import { CreateProjectDto } from '../../types';
-import { createProject } from '../../api';
+import { createProject, savePromptPack } from '../../api';
 import { createSeries, getSeries } from '@/features/series/api';
 import { SeriesDto } from '@/features/series/types';
 
@@ -40,13 +40,16 @@ export function NextIdeaComponent({ project, }: {
 
     async function toProject(idea: any) {
         const seriesId = series.find((s: SeriesDto) => s.name === idea.series?.name)?.id
-
+        if (!seriesId) {
+            alert('Series not found for idea: ' + idea.series?.name);
+            return;
+        }
         const body: CreateProjectDto = {
             topic: idea.topic,
             pillar: idea.pillar,
             seriesId: seriesId,
             continuityMode: idea.continuity || "light",
-            channelId: project.channel_id,
+            channelId: project.channelId,
             language: "en",
             durationMinutes: idea.duration_minutes || 6,
             format: "youtube_long",
@@ -56,6 +59,8 @@ export function NextIdeaComponent({ project, }: {
         try {
             await createProject(body);
             idea.exist = true;
+            await savePromptPack(project.id, JSON.stringify(project.prompt_pack_json, null, 2));  
+            alert('Project created for idea: ' + idea.topic);
             setReset(!reset);
         } catch (error) {
             alert('Failed to create project: ' + error);
@@ -102,6 +107,7 @@ export function NextIdeaComponent({ project, }: {
     }
 
     if (!project.hasOwnProperty('topic')) return (<></>)
+    if (!project.prompt_pack_json || !project.prompt_pack_json.next_ideas) return (<></>)
     return (
         <div className="card mt-5">
             <div className="card-header">

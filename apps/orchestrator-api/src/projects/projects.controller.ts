@@ -37,6 +37,11 @@ export class ProjectsController {
     return this.projects.create(dto);
   }
 
+  @Put(":id")
+  update(@Param("id") id: string, @Body() dto: CreateProjectDto) {
+    return this.projects.update(id, dto);
+  }
+
   @Post(":id/status")
   setStatus(@Param("id") id: string, @Body() dto: { status: string }) {
     return this.projects.updateStatus(id, dto.status as any);

@@ -2,7 +2,7 @@
 import { ProjectStatus } from "@yt-ai/db";
 
 export type CreateProjectDto = {
-  channelId: any;
+  channelId: string;
   topic: string;
   language?: string;
   durationMinutes?: number;

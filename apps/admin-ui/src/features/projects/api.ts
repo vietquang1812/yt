@@ -5,6 +5,16 @@ import type {
   ArtifactListResponse,
   ArtifactContentResponse,
 } from "./types";
+import { fetchJSON } from "@/lib/api/fetchJSON";
+
+
+  export async function savePromptPack(projectId:string, jsonText:string) {
+    return await fetchJSON(`/api/projects/${projectId}/prompt-pack`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt_pack_json: JSON.parse(jsonText) }),
+    });
+  }
 
 // list
 export async function getProjects(channelId: string) {

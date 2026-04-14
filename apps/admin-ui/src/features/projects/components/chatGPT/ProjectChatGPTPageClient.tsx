@@ -8,6 +8,7 @@ import { RefinePromptTab } from "./RefinePromptTab";
 import { fetchJSON } from "@/lib/api/fetchJSON";
 import { SegmentsGenerateTab } from "./SegmentsGenerateTab";
 import { PromptPackPart } from "../../types";
+import { savePromptPack } from "../../api";
 /* =======================
    Component
 ======================= */
@@ -51,16 +52,12 @@ export function ProjectChatGPTPageClient({
     );
     setPromptSource(res.content || "");
   }
-
-  async function savePromptPack() {
-    await fetchJSON(`/api/projects/${projectId}/prompt-pack`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt_pack_json: JSON.parse(jsonText) }),
-    });
-    loadPromptPack()
+  async function saveChange() {
+    await savePromptPack( projectId, jsonText);
+    loadPromptPack();
     alert("Prompt pack updated");
   }
+
 
   async function copyPrompt() {
     await navigator.clipboard.writeText(promptSource);
@@ -150,7 +147,7 @@ export function ProjectChatGPTPageClient({
             <>
               <button
                 className="btn btn-success me-2"
-                onClick={savePromptPack}
+                onClick={saveChange}
               >
                 Save Prompt Pack
               </button>

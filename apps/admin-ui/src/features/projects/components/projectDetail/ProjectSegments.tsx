@@ -1,5 +1,5 @@
 "use client";
-import { Collapse, Button, Form, Badge, Toast, Modal } from 'react-bootstrap';
+import { Collapse, Button, Form, Badge, Toast, Modal, Table } from 'react-bootstrap';
 import { useState, useEffect } from 'react';
 import { BsArrowUpCircleFill } from "react-icons/bs";
 import { FaCopy, FaCheck } from "react-icons/fa";
@@ -19,13 +19,35 @@ export function ProjectSegments({ project }: { project: any }) {
     const [showFile, setShowFile] = useState(true);
     const [showUpload, setShowUpload] = useState(false);
     const [img, setImg] = useState<Blob>();
+    const [showSegItem, setShowSegItem] = useState<boolean[][]>([]);
     const toggleShowB = () => setShowB(!showB);
     const handleCloseUpload = () => setShowUpload(false)
+
     useEffect(() => {
-        countIssue()
-        getImageData()
+        if (project.segments) {
+            getPromptByName()
+            countIssue()
+            getImageData()
+            initShowSegItem()
+        }
     }, [project]);
 
+    async function getPromptByName() {
+        
+    }
+
+    function initShowSegItem() {
+        let arr: boolean[][] = []
+        project.segments.forEach((s: any) => {
+            arr.push(s.segments.map((p: any) => false))
+        })
+        setShowSegItem([...arr])
+    }
+    function toggleShowSegItem(part: number, segment_id: number) {
+        const arr = [...showSegItem]
+        arr[part - 1][segment_id - 1] = !arr[part - 1][segment_id - 1]
+        setShowSegItem(arr)
+    }
     async function getImageData() {
         const imgData = await getImage(`/api/assets/images/prompt.png`)
         if (imgData) {
@@ -90,26 +112,9 @@ export function ProjectSegments({ project }: { project: any }) {
 
     async function copyAllPrompt() {
         let text = ''
-        const voice =  `
-[Voice Persona & Demographics]
-Gender & Age: Male, mid-30s to late 40s.
-Accent: Standard North American (or a very soft, neutralized British accent).
-Voice Type: A rich, warm baritone. The timbre should be deep, grounded, and slightly textured (a very subtle, natural vocal fry at the end of melancholic sentences).
-[Tone & Emotional Arc]
-Core Emotion: Introspective, empathetic, philosophical, and quietly authoritative.
-Vibe: "Late-night radio host" meets "premium documentary narrator." It should sound like a deeply personal confession to a close friend in a quiet room at 2 AM.
-Emotional Progression: Starts slightly exhausted and heavy (reflecting the burden of overthinking), but gradually transitions into a tone of quiet, resolute confidence by the end. Strictly avoid any overly enthusiastic, preachy, or "salesy" inflections.
-[Pacing & Rhythm]
-Speed: Deliberate and unhurried (around 130-140 words per minute, equivalent to a 1.08x base speed).
-Cadence: Conversational but theatrical.
-Pausing: Utilize strategic micro-pauses (0.5s - 1s) after heavy statements or punctuation (e.g., after "I had an unsettling realization."). Let the silence breathe.
-[Sound Design & Delivery Details]
-Mic Technique: High "proximity effect." The voice should sound intimately close to the microphone, capturing subtle breath sounds and mouth clicks to make it feel human, intimate, and raw.
-Articulation: Clear and articulate, but not overly theatrical or stiff. The words should flow naturally with a slight downward inflection at the end of profound statements to give them weight.
-                `
         project.segments.forEach((s: any) => {
             s.segments.forEach((p: any) => {
-                text += (p.video_prompt).replaceAll('\n', '; ')  + '\n'
+                text += (p.video_prompt).replaceAll('\n', '; ') + '\n'
             })
         })
         navigator.clipboard.writeText(text)
@@ -120,7 +125,7 @@ Articulation: Clear and articulate, but not overly theatrical or stiff. The word
     async function copyAllScripts() {
         let text = ''
         project.prompt_pack_json.parts.forEach((p: any) => {
-            text +=  p.content + '\n\n'
+            text += p.content + '\n\n'
         })
         navigator.clipboard.writeText(text)
         // toggleShowB()
@@ -152,41 +157,42 @@ Articulation: Clear and articulate, but not overly theatrical or stiff. The word
 
 
     if (!project.hasOwnProperty('topic')) return (<></>)
+    if (!project.segments) return (<></>)
     return (
         <div className="card">
             <div className="card-header">
                 <div className='d-flex'>
                     <Button
-                    key={'project-' + project.id}
-                    onClick={() => setOpen(!open)}
-                    aria-controls="example-collapse-text"
-                    aria-expanded={open}
-                    variant={"link"}
-                    className='w-100 text-start  text-decoration-none'
-                >
-                    <div className='d-flex d-flex justify-content-between align-item-center'>
-                        <h1 className="h4 mt-2 mb-1">{project.topic} <Badge bg={issue === 0 ? "success" : "warning"} className=' rounded rounded-circle'>{issue}</Badge></h1>
-                        <div style={{
-                            transform: `rotate(${open ? 0 : '180deg'}) `,
-                            transition: 'transform ease-in-out .3s', fontSize: 44,
-                        }}><BsArrowUpCircleFill /></div>
+                        key={'project-' + project.id}
+                        onClick={() => setOpen(!open)}
+                        aria-controls="example-collapse-text"
+                        aria-expanded={open}
+                        variant={"link"}
+                        className='w-100 text-start  text-decoration-none'
+                    >
+                        <div className='d-flex d-flex justify-content-between align-item-center'>
+                            <h1 className="h4 mt-2 mb-1">{project.topic} <Badge bg={issue === 0 ? "success" : "warning"} className=' rounded rounded-circle'>{issue}</Badge></h1>
+                            <div style={{
+                                transform: `rotate(${open ? 0 : '180deg'}) `,
+                                transition: 'transform ease-in-out .3s', fontSize: 44,
+                            }}><BsArrowUpCircleFill /></div>
 
-                    </div>
-                </Button>
-                <Button
-                    className='ms-2'
-                    onClick={() => copyAllPrompt()}
-                    variant={"success"}
-                >
-                    Copy All Prompts
-                </Button>
-                <Button
-                    className='ms-2'
-                    onClick={() => copyAllScripts()}
-                    variant={"info"}
-                >
-                    Copy All Scripts
-                </Button>
+                        </div>
+                    </Button>
+                    <Button
+                        className='ms-2'
+                        onClick={() => copyAllPrompt()}
+                        variant={"success"}
+                    >
+                        Copy All Prompts
+                    </Button>
+                    <Button
+                        className='ms-2'
+                        onClick={() => copyAllScripts()}
+                        variant={"info"}
+                    >
+                        Copy All Scripts
+                    </Button>
                 </div>
 
             </div >
@@ -195,17 +201,18 @@ Articulation: Clear and articulate, but not overly theatrical or stiff. The word
                     <div className="row">
                         <div className="col-3 border-end border-white position-relative">
                             <div className='position-sticky' style={{ top: 40 }}>
-                                {project.prompt_pack_json.parts.map((prompt: PromptPackPart) => (
+                                {project.segments.map((seg: any, index: number) => (
 
                                     <Button
-                                        key={'part-' + prompt.part}
-                                        onClick={() => changePart(prompt.part)}
+                                        key={'part-' + seg.part}
+                                        onClick={() => changePart(seg.part)}
                                         aria-controls="example-collapse-text"
-                                        aria-expanded={prompt.part === part}
-                                        variant={prompt.part === part ? 'primary' : "outline-primary"}
+                                        aria-expanded={seg.part === part}
+                                        variant={seg.part === part ? 'primary' : "outline-primary"}
                                         className='w-100 text-start mt-3 text-white flex-1'
                                     >
-                                        {prompt.part}. {prompt.role}
+                                        {seg.part}. {seg.role}<br />
+                                        <small className=' text-white'>{seg.segments?.length || 0}: {seg.segments[0]?.start_time} - {seg.segments[seg.segments.length - 1]?.end_time}</small>
                                     </Button>
 
 
@@ -229,13 +236,13 @@ Articulation: Clear and articulate, but not overly theatrical or stiff. The word
                                         <div className='d-flex  align-items-center' >
                                             <Button
                                                 key={s.part + '-' + p.segment_id}
-                                                onClick={() => setSegement(p.segment_id)}
+                                                onClick={() => toggleShowSegItem(s.part, p.segment_id)}
                                                 aria-controls="example-collapse-text"
                                                 aria-expanded={s.part === part && p.segment_id === segement}
                                                 variant={"link"}
                                                 className='w-100 text-start p-3 text-decoration-none text-light'
                                             >
-                                                <h5 className='h5'>{p.segment_id}: {p.narration.substring(0,60)}...</h5>
+                                                <h5 className='h5'>{p.segment_id}: {p.narration.substring(0, 60)}...</h5>
                                             </Button>
                                             <Button
                                                 key={'file_' + s.part + '-' + p.segment_id}
@@ -250,16 +257,62 @@ Articulation: Clear and articulate, but not overly theatrical or stiff. The word
                                             </Button>
 
                                         </div>
-                                        <Collapse in={s.part === part && p.segment_id === segement} key={'collapse-' + s.part + '-' + p.segment_id}>
+                                        <Collapse in={showSegItem[s.part - 1]?.[p.segment_id - 1]} key={'collapse-' + s.part + '-' + p.segment_id}>
                                             <div className='p-2'>
                                                 <div className='d-flex align-items-start'>
-                                                    {p.video_prompt}
-                                                    <Button
-                                                        onClick={() => copyPrompt(p.video_prompt, s.part, p.segment_id)}
-                                                        variant={"link"}
-                                                    >
-                                                        <FaCopy />
-                                                    </Button>
+                                                    <Table>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td>box chat</td>
+                                                                <td>{p.box_text}</td>
+                                                                <td>
+                                                                    <Button
+                                                                        onClick={() => copyPrompt(p.box_text, s.part, p.segment_id)}
+                                                                        variant={"link"}
+                                                                    >
+                                                                        <FaCopy />
+                                                                    </Button>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>transition</td>
+                                                                <td>{p.transition}</td>
+                                                                <td>
+                                                                    <Button
+                                                                        onClick={() => copyPrompt(p.transition, s.part, p.segment_id)}
+                                                                        variant={"link"}
+                                                                    >
+                                                                        <FaCopy />
+                                                                    </Button>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>narration</td>
+                                                                <td>{p.narration}</td>
+                                                                <td>
+                                                                    <Button
+                                                                        onClick={() => copyPrompt(p.narration, s.part, p.segment_id)}
+                                                                        variant={"link"}
+                                                                    >
+                                                                        <FaCopy />
+                                                                    </Button>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>video_prompt</td>
+                                                                <td>{p.video_prompt.substring(0, 100)}...</td>
+                                                                <td>
+                                                                    <Button
+                                                                        onClick={() => copyPrompt(p.video_prompt, s.part, p.segment_id)}
+                                                                        variant={"link"}
+                                                                    >
+                                                                        <FaCopy />
+                                                                    </Button>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </Table>
+
                                                 </div>
                                             </div>
                                         </Collapse>

@@ -51,7 +51,7 @@ export async function buildSegmentsGeneratePrompt(projectId: string, index?: num
     }
 
     const part = pack.parts.find(x => x.part === index)
-    const scriptText = part?.content
+    const scriptText = part?.content || ""
     const partRole = part?.role
 
     const user = renderTemplate(tmpl, {

@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PromptPackPart } from './types'
 import { fetchJSON } from "@/lib/api/fetchJSON";
+import { PromptPackPart } from "../../types";
 
 
 /* =======================
@@ -42,7 +42,7 @@ export function SegmentsGenerateTab({
       } else {
         setPartSegment('')
       }
-
+      setError(null);
     } catch (e: any) {
       setError(e.message);
     } finally {

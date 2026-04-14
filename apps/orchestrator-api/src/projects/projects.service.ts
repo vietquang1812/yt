@@ -15,6 +15,7 @@ import * as promptManager from "./prompts/promptManager";
 import { validatePromptPack } from './validators/promptPack.validator';
 import { updateScriptQaJSON } from "./prompts/updateScriptQaJSON";
 import { buildRegeneratePrompt } from "./prompts/buildPromptRegenerate";
+import { channel } from "node:diagnostics_channel";
 type Segment = {
   segment_id: Number;
   start_time: string;
@@ -112,15 +113,35 @@ export class ProjectsService {
     const p = await prisma.project.findUnique({
       where: { id },
       include: {
-        channel: true,        
+        channel: true,
         series: true,
-        artifacts: true, 
-        jobs: true, 
-        analytics: true,  
+        artifacts: true,
+        jobs: true,
+        analytics: true,
       },
     });
     if (!p) throw new NotFoundException("Project not found");
     return p;
+  }
+
+  async update(id: string, dto: CreateProjectDto) {
+    if (!dto.topic || !dto.topic.trim()) throw new BadRequestException("topic is required");
+    const project = await prisma.project.findUnique({ where: { id } });
+    if (!project) throw new NotFoundException("Project not found");
+    return prisma.project.update({
+      where: { id },
+      data: {
+        topic: dto.topic.trim(),
+        language: dto.language ?? "en",
+        durationMinutes: dto.durationMinutes ?? 6,
+        format: dto.format ?? "youtube_long",
+        tone: dto.tone,
+        pillar: dto.pillar,
+        seriesId: dto.seriesId,
+        continuityMode: dto.continuityMode ?? "light",
+        channelId: dto.channelId,
+      },
+    });
   }
 
   async listArtifacts(projectId: string) {
